@@ -858,14 +858,22 @@ fun StudentProfileScreen(
                                         }
                                         Spacer(modifier = Modifier.weight(1f))
                                         Surface(
-                                            color = if (proj.verificationStatus == VerificationStatus.APPROVED) Color(0xFFD1FAE5) else Color(0xFFFEF3C7),
+                                            color = when (proj.verificationStatus) {
+                                                VerificationStatus.APPROVED -> Color(0xFFD1FAE5)
+                                                VerificationStatus.REJECTED -> Color(0xFFFEE2E2)
+                                                else -> Color(0xFFFEF3C7)
+                                            },
                                             shape = RoundedCornerShape(6.dp)
                                         ) {
                                             Text(
                                                 text = proj.verificationStatus.name,
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = if (proj.verificationStatus == VerificationStatus.APPROVED) Color(0xFF065F46) else Color(0xFF92400E),
+                                                color = when (proj.verificationStatus) {
+                                                    VerificationStatus.APPROVED -> Color(0xFF065F46)
+                                                    VerificationStatus.REJECTED -> Color(0xFFDC2626)
+                                                    else -> Color(0xFF92400E)
+                                                },
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                         }
@@ -918,20 +926,54 @@ fun StudentProfileScreen(
                                     ) {
                                         Text(cert.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DevLinkTextPrimary)
                                         Surface(
-                                            color = if (cert.verificationStatus == VerificationStatus.APPROVED) Color(0xFFD1FAE5) else Color(0xFFFEF3C7),
+                                            color = when (cert.verificationStatus) {
+                                                VerificationStatus.APPROVED -> Color(0xFFD1FAE5)
+                                                VerificationStatus.REJECTED -> Color(0xFFFEE2E2)
+                                                else -> Color(0xFFFEF3C7)
+                                            },
                                             shape = RoundedCornerShape(6.dp)
                                         ) {
                                             Text(
                                                 text = cert.verificationStatus.name,
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = if (cert.verificationStatus == VerificationStatus.APPROVED) Color(0xFF065F46) else Color(0xFF92400E),
+                                                color = when (cert.verificationStatus) {
+                                                    VerificationStatus.APPROVED -> Color(0xFF065F46)
+                                                    VerificationStatus.REJECTED -> Color(0xFFDC2626)
+                                                    else -> Color(0xFF92400E)
+                                                },
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                         }
                                     }
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text("Issued By: ${cert.issuingOrg}", fontSize = 12.sp, color = DevLinkTextSecondary, fontWeight = FontWeight.Medium)
+                                    if (cert.verificationStatus == VerificationStatus.REJECTED) {
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(Color(0xFFFEF2F2), RoundedCornerShape(6.dp))
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Cancel,
+                                                contentDescription = null,
+                                                tint = Color(0xFFDC2626),
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = if (!cert.teacherRemarks.isNullOrBlank()) "Feedback: ${cert.teacherRemarks}" else "Rejected by faculty • Tap to view details",
+                                                fontSize = 11.sp,
+                                                color = Color(0xFFB91C1C),
+                                                fontWeight = FontWeight.Medium,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

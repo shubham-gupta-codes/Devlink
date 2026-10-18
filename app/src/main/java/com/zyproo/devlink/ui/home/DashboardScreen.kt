@@ -900,6 +900,8 @@ fun DashboardScreen(
                     visitedProfileViewModel.submitTeacherFeedback(student.userId, content)
                 },
                 onBackClick = { selectedStudentProfileForDetails = null },
+                onProjectClick = { selectedProjectForDetails = it },
+                onCertificateClick = { selectedCertificateForDetails = it },
                 onMessageClick = { username ->
                     selectedStudentProfileForDetails = null
                     chatViewModel.startDirectChat(username) { newConvId ->

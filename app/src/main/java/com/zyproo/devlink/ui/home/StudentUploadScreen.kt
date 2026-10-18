@@ -266,15 +266,16 @@ fun StudentUploadScreen(
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(170.dp)
+                                                .heightIn(min = 180.dp, max = 260.dp)
                                                 .clip(RoundedCornerShape(12.dp))
-                                                .background(Color(0xFFE2E8F0))
+                                                .background(Color(0xFF0F172A)),
+                                            contentAlignment = Alignment.Center
                                         ) {
                                             if (!fullUrl.isNullOrBlank()) {
                                                 AsyncImage(
                                                     model = fullUrl,
                                                     contentDescription = "Screenshot ${index + 1}",
-                                                    contentScale = ContentScale.Crop,
+                                                    contentScale = ContentScale.Fit,
                                                     modifier = Modifier.fillMaxSize()
                                                 )
                                             }
@@ -489,16 +490,17 @@ fun StudentUploadScreen(
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(180.dp)
+                                            .heightIn(min = 180.dp, max = 260.dp)
                                             .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFE2E8F0))
+                                            .background(Color(0xFF0F172A)),
+                                        contentAlignment = Alignment.Center
                                     ) {
                                         val fullUrl = url.toFullMediaUrl()
                                         if (!fullUrl.isNullOrBlank()) {
                                             AsyncImage(
                                                 model = fullUrl,
                                                 contentDescription = "Certificate Image",
-                                                contentScale = ContentScale.Crop,
+                                                contentScale = ContentScale.Fit,
                                                 modifier = Modifier.fillMaxSize()
                                             )
                                         }

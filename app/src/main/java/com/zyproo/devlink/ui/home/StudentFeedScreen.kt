@@ -248,15 +248,15 @@ fun StudentFeedScreen(
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(170.dp)
+                                                .heightIn(min = 180.dp, max = 260.dp)
                                                 .clip(RoundedCornerShape(12.dp))
-                                                .background(Color(0xFFE2E8F0)),
+                                                .background(Color(0xFF0F172A)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             AsyncImage(
                                                 model = imageUrl,
                                                 contentDescription = "Project Image Preview",
-                                                contentScale = ContentScale.Crop,
+                                                contentScale = ContentScale.Fit,
                                                 modifier = Modifier.fillMaxSize()
                                             )
                                         }
@@ -271,15 +271,16 @@ fun StudentFeedScreen(
                                             if (!fullUrl.isNullOrBlank()) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .width(260.dp)
-                                                        .height(170.dp)
+                                                        .width(220.dp)
+                                                        .height(200.dp)
                                                         .clip(RoundedCornerShape(12.dp))
-                                                        .background(Color(0xFFE2E8F0))
+                                                        .background(Color(0xFF0F172A)),
+                                                    contentAlignment = Alignment.Center
                                                 ) {
                                                     AsyncImage(
                                                         model = fullUrl,
                                                         contentDescription = "Screenshot ${idx + 1}",
-                                                        contentScale = ContentScale.Crop,
+                                                        contentScale = ContentScale.Fit,
                                                         modifier = Modifier.fillMaxSize()
                                                     )
                                                     Surface(
