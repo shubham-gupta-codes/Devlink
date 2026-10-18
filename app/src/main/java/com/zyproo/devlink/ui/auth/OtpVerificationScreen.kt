@@ -1,34 +1,49 @@
 package com.zyproo.devlink.ui.auth
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.MarkEmailRead
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -41,11 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.zyproo.devlink.ui.navigation.DevLinkDestinations
-import com.zyproo.devlink.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OtpVerificationScreen(
     email: String,
@@ -67,7 +80,7 @@ fun OtpVerificationScreen(
         }
     }
 
-    // Countdown for "Resend OTP"
+    // Countdown for "Resend OTP" — mirrors the mockup's "Resend OTP (00:45)" text.
     LaunchedEffect(secondsRemaining) {
         if (secondsRemaining > 0) {
             delay(1000.milliseconds)
@@ -75,263 +88,102 @@ fun OtpVerificationScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = DevLinkTextPrimary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DevLinkBackground)
-            )
-        },
-        containerColor = DevLinkBackground
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 8.dp)
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+    ) {
+        Spacer(modifier = Modifier.height(48.dp))
+        Text(
+            text = "Verify Email",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "Enter the 6 digit code sent to ${uiState.email}",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp)
+        )
 
-            // Email illustration badge
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(Color(0xFFE2E8F0), RoundedCornerShape(18.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MarkEmailRead,
-                    contentDescription = null,
-                    tint = Color(0xFF334155),
-                    modifier = Modifier.size(30.dp)
-                )
-            }
+        Spacer(modifier = Modifier.height(32.dp))
 
-            Spacer(modifier = Modifier.height(20.dp))
+        OtpCodeInput(
+            otp = uiState.otp,
+            onOtpChange = viewModel::onOtpChange
+        )
 
+        if (uiState.verifyError != null) {
             Text(
-                text = "Verify Email",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = DevLinkTextPrimary
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Enter the 6-digit code sent to",
+                text = uiState.verifyError.orEmpty(),
+                color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
-                color = DevLinkTextSecondary
+                modifier = Modifier.padding(top = 16.dp)
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = uiState.email.ifBlank { email },
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = DevLinkTextPrimary
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Security Code Header row with Clear button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Verification Code",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DevLinkTextSecondary
-                )
-
-                if (uiState.otp.replace(" ", "").isNotEmpty()) {
-                    TextButton(
-                        onClick = { viewModel.clearOtp() },
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear",
-                            tint = Color(0xFFEF4444),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(
-                            text = "Clear code",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFFEF4444)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 6-Cell individual OTP Code Input
-            OtpCodeInput(
-                otp = uiState.otp,
-                onOtpChange = viewModel::onOtpChange
-            )
-
-            // Error display alert
-            if (uiState.verifyError != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Surface(
-                    color = Color(0xFFFEF2F2),
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, Color(0xFFFECACA)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ErrorOutline,
-                            contentDescription = null,
-                            tint = Color(0xFFDC2626),
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = uiState.verifyError.orEmpty(),
-                            color = Color(0xFFB91C1C),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Resend code countdown / action row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = null,
-                        tint = DevLinkTextSecondary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = if (secondsRemaining > 0) {
-                            "Resend code in ${formatTime(secondsRemaining)}"
-                        } else {
-                            "Didn't receive the code?"
-                        },
-                        fontSize = 13.sp,
-                        color = DevLinkTextSecondary
-                    )
-                }
-
-                if (secondsRemaining == 0) {
-                    TextButton(
-                        onClick = {
-                            viewModel.resendOtp()
-                            secondsRemaining = (uiState.otpExpiryMinutes ?: 5) * 60
-                        },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "Resend OTP",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = DevLinkBlue
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Verify button
-            val isCodeComplete = uiState.otp.replace(" ", "").length == 6
-            Button(
-                onClick = viewModel::verifyOtp,
-                enabled = !uiState.isVerifyLoading && isCodeComplete,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DevLinkBlue,
-                    disabledContainerColor = Color(0xFFCBD5E1),
-                    disabledContentColor = Color.White
-                )
-            ) {
-                if (uiState.isVerifyLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
+                text = if (secondsRemaining > 0) {
+                    "Didn't receive the code? Resend OTP (${formatTime(secondsRemaining)})"
                 } else {
-                    Text(
-                        text = "Verify Code",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
-                    )
+                    "Didn't receive the code?"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (secondsRemaining == 0) {
+                TextButton(onClick = {
+                    viewModel.resendOtp()
+                    secondsRemaining = (uiState.otpExpiryMinutes ?: 5) * 60
+                }) {
+                    Text("Resend")
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                TextButton(onClick = onBack) {
-                    Text(
-                        text = "Wrong email? Back to login",
-                        color = DevLinkTextSecondary,
-                        fontSize = 13.sp
-                    )
-                }
+        Button(
+            onClick = viewModel::verifyOtp,
+            enabled = !uiState.isVerifyLoading && uiState.otp.replace(" ", "").length == 6,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            if (uiState.isVerifyLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.height(20.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text("Verify", fontWeight = FontWeight.SemiBold)
             }
+        }
+
+        TextButton(onClick = onBack, modifier = Modifier.padding(top = 8.dp)) {
+            Text("Back to login")
         }
     }
 }
 
 /**
- * 6-Cell individual OTP Code Input
- * Each cell can be individually selected and deleted.
- * Features:
- * - Sleek charcoal/slate focus border (no harsh blue border).
- * - Direct cell tapping to modify or delete a specific index.
- * - Backspace deletion of specific cells.
- * - Multi-digit paste support.
+ * Renders the OTP as 6 individual boxes without blue focus borders,
+ * allowing specific index selection and deletion.
  */
 @Composable
 private fun OtpCodeInput(
     otp: String,
-    onOtpChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onOtpChange: (String) -> Unit
 ) {
     val focusRequesters = remember { List(6) { FocusRequester() } }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // Convert OTP string into a 6-element list where ' ' represents an empty cell
     val charList = remember(otp) {
         val list = MutableList(6) { ' ' }
         for (i in 0 until minOf(6, otp.length)) {
@@ -340,7 +192,6 @@ private fun OtpCodeInput(
         list
     }
 
-    // Auto-focus first empty cell on appearance
     LaunchedEffect(Unit) {
         val firstEmpty = charList.indexOfFirst { !it.isDigit() }
         val target = if (firstEmpty != -1) firstEmpty else 0
@@ -350,9 +201,8 @@ private fun OtpCodeInput(
     }
 
     Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         for (index in 0 until 6) {
             val char = charList[index]
@@ -371,19 +221,17 @@ private fun OtpCodeInput(
 
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(60.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (isFocused) Color.White else Color(0xFFF8FAFC))
+                    .size(48.dp)
                     .border(
-                        width = if (isFocused) 2.dp else 1.2.dp,
+                        width = if (isFocused) 2.dp else 1.5.dp,
                         color = when {
-                            isFocused -> Color(0xFF334155) // Sleek slate-700 when selected
-                            hasDigit -> Color(0xFF94A3B8)  // Neutral slate-400 for filled cells
-                            else -> Color(0xFFE2E8F0)      // Soft slate-200 for empty cells
+                            isFocused -> Color(0xFF475569) // Neutral slate border when selected (no blue)
+                            hasDigit -> Color(0xFF94A3B8)  // Neutral gray when filled
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                         },
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(10.dp)
                     )
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(10.dp))
                     .clickable {
                         focusRequesters[index].requestFocus()
                     },
@@ -394,7 +242,7 @@ private fun OtpCodeInput(
                     onValueChange = { newTfv ->
                         val text = newTfv.text
                         if (text.isEmpty()) {
-                            // User deleted this specific cell
+                            // Deleting this specific index
                             charList[index] = ' '
                             onOtpChange(charList.joinToString(""))
                             textFieldValue = TextFieldValue("", TextRange.Zero)
@@ -474,25 +322,13 @@ private fun OtpCodeInput(
                         }
                     ),
                     textStyle = TextStyle(
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        color = Color(0xFF0F172A)
+                        color = MaterialTheme.colorScheme.onSurface
                     ),
-                    cursorBrush = SolidColor(Color(0xFF334155))
+                    cursorBrush = SolidColor(Color(0xFF475569))
                 )
-
-                // Bottom cursor indicator when focused and empty
-                if (isFocused && !hasDigit) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 12.dp)
-                            .width(16.dp)
-                            .height(2.dp)
-                            .background(Color(0xFF64748B), RoundedCornerShape(1.dp))
-                    )
-                }
             }
         }
     }
