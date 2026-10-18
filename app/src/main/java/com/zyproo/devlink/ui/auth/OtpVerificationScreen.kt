@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -38,15 +37,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -173,165 +165,126 @@ fun OtpVerificationScreen(
 }
 
 /**
- * Renders the OTP as 6 individual boxes without blue focus borders,
- * allowing specific index selection and deletion.
+ * 6-digit OTP input rendered with individual boxes.
+ * - Backspace removes digits one by one from right to left reliably on all keyboards.
+ * - Tapping any box selects that exact index to delete or replace it.
+ * - Uses neutral slate borders when selected (no blue borders).
+ * - No outer OutlinedTextField rectangle outline.
  */
 @Composable
 private fun OtpCodeInput(
     otp: String,
     onOtpChange: (String) -> Unit
 ) {
-    val focusRequesters = remember { List(6) { FocusRequester() } }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
+    var isFocused by remember { mutableStateOf(false) }
 
-    val charList = remember(otp) {
-        val list = MutableList(6) { ' ' }
-        for (i in 0 until minOf(6, otp.length)) {
-            list[i] = otp[i]
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = otp,
+                selection = TextRange(otp.length)
+            )
+        )
+    }
+
+    LaunchedEffect(otp) {
+        if (textFieldValue.text != otp) {
+            textFieldValue = TextFieldValue(
+                text = otp,
+                selection = TextRange(otp.length)
+            )
         }
-        list
     }
 
     LaunchedEffect(Unit) {
-        val firstEmpty = charList.indexOfFirst { !it.isDigit() }
-        val target = if (firstEmpty != -1) firstEmpty else 0
         try {
-            focusRequesters[target].requestFocus()
+            focusRequester.requestFocus()
         } catch (_: Exception) {}
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        for (index in 0 until 6) {
-            val char = charList[index]
-            val hasDigit = char.isDigit()
-            var isFocused by remember { mutableStateOf(false) }
-
-            val digitStr = if (hasDigit) char.toString() else ""
-            var textFieldValue by remember(char) {
-                mutableStateOf(
-                    TextFieldValue(
-                        text = digitStr,
-                        selection = TextRange(digitStr.length)
-                    )
-                )
-            }
-
-            Box(
+    BasicTextField(
+        value = textFieldValue,
+        onValueChange = { newTfv ->
+            val filtered = newTfv.text.filter { it.isDigit() }.take(6)
+            textFieldValue = newTfv.copy(text = filtered)
+            onOtpChange(filtered)
+        },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.NumberPassword,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { keyboardController?.hide() }
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester)
+            .onFocusChanged { isFocused = it.isFocused },
+        decorationBox = {
+            Row(
                 modifier = Modifier
-                    .size(48.dp)
-                    .border(
-                        width = if (isFocused) 2.dp else 1.5.dp,
-                        color = when {
-                            isFocused -> Color(0xFF475569) // Neutral slate border when selected (no blue)
-                            hasDigit -> Color(0xFF94A3B8)  // Neutral gray when filled
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        },
-                        shape = RoundedCornerShape(10.dp)
-                    )
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(10.dp))
+                    .fillMaxWidth()
                     .clickable {
-                        focusRequesters[index].requestFocus()
+                        focusRequester.requestFocus()
+                        keyboardController?.show()
                     },
-                contentAlignment = Alignment.Center
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                BasicTextField(
-                    value = textFieldValue,
-                    onValueChange = { newTfv ->
-                        val text = newTfv.text
-                        if (text.isEmpty()) {
-                            // Deleting this specific index
-                            charList[index] = ' '
-                            onOtpChange(charList.joinToString(""))
-                            textFieldValue = TextFieldValue("", TextRange.Zero)
+                repeat(6) { index ->
+                    val digit = otp.getOrNull(index)?.toString() ?: ""
+                    val cursorEnd = textFieldValue.selection.end
+                    val isCellActive = isFocused && (
+                        if (textFieldValue.selection.collapsed) {
+                            if (cursorEnd < 6) index == cursorEnd else index == 5
                         } else {
-                            val digits = text.filter { it.isDigit() }
-                            if (digits.length == 1) {
-                                val d = digits[0]
-                                charList[index] = d
-                                onOtpChange(charList.joinToString(""))
-                                textFieldValue = TextFieldValue(d.toString(), TextRange(1))
-                                if (index < 5) {
-                                    focusRequesters[index + 1].requestFocus()
-                                } else {
-                                    keyboardController?.hide()
-                                }
-                            } else if (digits.length > 2) {
-                                // Multi-digit paste
-                                var target = index
-                                for (d in digits) {
-                                    if (target < 6) {
-                                        charList[target] = d
-                                        target++
-                                    }
-                                }
-                                onOtpChange(charList.joinToString(""))
-                                if (target < 6) {
-                                    focusRequesters[target].requestFocus()
-                                } else {
-                                    keyboardController?.hide()
-                                }
-                            } else if (digits.length == 2) {
-                                // Overwriting existing digit in this cell
-                                val newChar = if (digits.first() == char) digits.last() else digits.first()
-                                charList[index] = newChar
-                                onOtpChange(charList.joinToString(""))
-                                textFieldValue = TextFieldValue(newChar.toString(), TextRange(1))
-                                if (index < 5) {
-                                    focusRequesters[index + 1].requestFocus()
-                                } else {
-                                    keyboardController?.hide()
-                                }
-                            }
+                            index >= textFieldValue.selection.start && index < textFieldValue.selection.end
                         }
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize(Alignment.Center)
-                        .focusRequester(focusRequesters[index])
-                        .onFocusChanged { isFocused = it.isFocused }
-                        .onKeyEvent { keyEvent ->
-                            if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Backspace) {
-                                if (charList[index] != ' ') {
-                                    charList[index] = ' '
-                                    onOtpChange(charList.joinToString(""))
-                                    textFieldValue = TextFieldValue("", TextRange.Zero)
-                                } else if (index > 0) {
-                                    charList[index - 1] = ' '
-                                    onOtpChange(charList.joinToString(""))
-                                    focusRequesters[index - 1].requestFocus()
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .border(
+                                width = if (isCellActive) 2.dp else 1.5.dp,
+                                color = when {
+                                    isCellActive -> Color(0xFF475569) // Neutral slate border when selected (no blue)
+                                    digit.isNotEmpty() -> Color(0xFF94A3B8) // Neutral gray when filled
+                                    else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                },
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(10.dp))
+                            .clickable {
+                                focusRequester.requestFocus()
+                                keyboardController?.show()
+                                if (index < otp.length) {
+                                    // Highlight/select this specific digit so backspace deletes it or typing replaces it
+                                    textFieldValue = textFieldValue.copy(
+                                        selection = TextRange(index, index + 1)
+                                    )
+                                } else {
+                                    // If empty, position cursor at the next available position
+                                    textFieldValue = textFieldValue.copy(
+                                        selection = TextRange(otp.length)
+                                    )
                                 }
-                                true
-                            } else {
-                                false
-                            }
-                        },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = if (index == 5) ImeAction.Done else ImeAction.Next
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = {
-                            if (index < 5) focusRequesters[index + 1].requestFocus()
-                        },
-                        onDone = {
-                            keyboardController?.hide()
-                        }
-                    ),
-                    textStyle = TextStyle(
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    cursorBrush = SolidColor(Color(0xFF475569))
-                )
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = digit,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
         }
-    }
+    )
 }
 
 private fun formatTime(totalSeconds: Int): String {
