@@ -264,7 +264,7 @@ fun ProjectDetailsScreen(
                                             .fillMaxWidth()
                                             .heightIn(min = 200.dp, max = 340.dp)
                                             .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFF0F172A)),
+                                            .background(Color(0xFFF1F5F9)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         AsyncImage(
@@ -298,7 +298,7 @@ fun ProjectDetailsScreen(
                                                 modifier = Modifier
                                                     .fillMaxSize()
                                                     .clip(RoundedCornerShape(12.dp))
-                                                    .background(Color(0xFF0F172A)),
+                                                    .background(Color(0xFFF1F5F9)),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 if (!imageUrl.isNullOrBlank()) {
@@ -311,15 +311,16 @@ fun ProjectDetailsScreen(
                                                 }
                                                 // Photo counter badge
                                                 Surface(
-                                                    color = Color.Black.copy(alpha = 0.65f),
+                                                    color = Color.White.copy(alpha = 0.9f),
                                                     shape = RoundedCornerShape(6.dp),
+                                                    border = BorderStroke(1.dp, DevLinkBorder),
                                                     modifier = Modifier
                                                         .align(Alignment.TopStart)
                                                         .padding(8.dp)
                                                 ) {
                                                     Text(
                                                         text = "Photo ${page + 1} of ${project.imageUrls.size}",
-                                                        color = Color.White,
+                                                        color = DevLinkTextPrimary,
                                                         fontSize = 11.sp,
                                                         fontWeight = FontWeight.Bold,
                                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -340,12 +341,12 @@ fun ProjectDetailsScreen(
                                                     .align(Alignment.CenterStart)
                                                     .padding(start = 6.dp)
                                                     .size(32.dp)
-                                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                                    .background(Color.White.copy(alpha = 0.9f), CircleShape)
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                                     contentDescription = "Previous Photo",
-                                                    tint = Color.White,
+                                                    tint = DevLinkTextPrimary,
                                                     modifier = Modifier.size(18.dp)
                                                 )
                                             }
@@ -363,12 +364,12 @@ fun ProjectDetailsScreen(
                                                     .align(Alignment.CenterEnd)
                                                     .padding(end = 6.dp)
                                                     .size(32.dp)
-                                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                                    .background(Color.White.copy(alpha = 0.9f), CircleShape)
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                                     contentDescription = "Next Photo",
-                                                    tint = Color.White,
+                                                    tint = DevLinkTextPrimary,
                                                     modifier = Modifier.size(18.dp)
                                                 )
                                             }

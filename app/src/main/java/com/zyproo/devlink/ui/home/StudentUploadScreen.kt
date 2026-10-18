@@ -268,7 +268,7 @@ fun StudentUploadScreen(
                                                 .fillMaxWidth()
                                                 .heightIn(min = 180.dp, max = 260.dp)
                                                 .clip(RoundedCornerShape(12.dp))
-                                                .background(Color(0xFF0F172A)),
+                                                .background(Color(0xFFF1F5F9)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             if (!fullUrl.isNullOrBlank()) {
@@ -282,15 +282,16 @@ fun StudentUploadScreen(
 
                                             // Number Badge
                                             Surface(
-                                                color = Color.Black.copy(alpha = 0.65f),
+                                                color = Color.White.copy(alpha = 0.9f),
                                                 shape = RoundedCornerShape(8.dp),
+                                                border = BorderStroke(1.dp, DevLinkBorder),
                                                 modifier = Modifier
                                                     .align(Alignment.TopStart)
                                                     .padding(8.dp)
                                             ) {
                                                 Text(
                                                     text = "Screenshot ${index + 1} of ${projectImages.size}",
-                                                    color = Color.White,
+                                                    color = DevLinkTextPrimary,
                                                     fontSize = 11.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -492,7 +493,7 @@ fun StudentUploadScreen(
                                             .fillMaxWidth()
                                             .heightIn(min = 180.dp, max = 260.dp)
                                             .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFF0F172A)),
+                                            .background(Color(0xFFF1F5F9)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         val fullUrl = url.toFullMediaUrl()
@@ -506,15 +507,16 @@ fun StudentUploadScreen(
                                         }
 
                                         Surface(
-                                            color = Color.Black.copy(alpha = 0.65f),
+                                            color = Color.White.copy(alpha = 0.9f),
                                             shape = RoundedCornerShape(6.dp),
+                                            border = BorderStroke(1.dp, DevLinkBorder),
                                             modifier = Modifier
                                                 .align(Alignment.TopStart)
                                                 .padding(8.dp)
                                         ) {
                                             Text(
                                                 text = "IMAGE CERTIFICATE ATTACHED",
-                                                color = Color.White,
+                                                color = DevLinkTextPrimary,
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)

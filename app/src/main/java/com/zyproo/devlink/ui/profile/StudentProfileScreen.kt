@@ -56,6 +56,9 @@ fun StudentProfileScreen(
     var showAddSkillDialog by remember { mutableStateOf(false) }
     var showUploadSheet by remember { mutableStateOf(false) }
     var showAddFeedbackDialog by remember { mutableStateOf(false) }
+    var activeSubTab by remember { mutableStateOf(0) } // 0: Projects, 1: Skills, 2: Certificates
+    var selectedStatusFilter by remember { mutableStateOf("ALL") } // ALL, APPROVED, PENDING, REJECTED
+    var filterDropdownExpanded by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -524,454 +527,589 @@ fun StudentProfileScreen(
                 }
             }
 
-            // Skill Verification Requests Section (Below Verified Skills)
-            if (isOwnProfile || skillRequests.isNotEmpty()) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, DevLinkBorder),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            // Sub-Status Tabs Section (Below Verified Skills): Project, Skill, Certificate with Dropdown Filter
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, DevLinkBorder),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    // Header Row with Tabs and Filter Dropdown
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        Text(
+                            text = "Verification Status",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = DevLinkTextPrimary
+                        )
+
+                        // Status Filter Dropdown (All, Approved, Pending, Rejected)
+                        Box {
+                            Surface(
+                                color = Color(0xFFF1F5F9),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, DevLinkBorder),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { filterDropdownExpanded = true }
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.FactCheck,
-                                    contentDescription = null,
-                                    tint = DevLinkBlue,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = "Skill Request Status",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = DevLinkTextPrimary
-                                )
-                            }
-                            if (isOwnProfile) {
-                                IconButton(
-                                    onClick = { showAddSkillDialog = true },
-                                    modifier = Modifier.size(28.dp)
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
+                                    val filterColor = when (selectedStatusFilter) {
+                                        "APPROVED" -> Color(0xFF059669)
+                                        "PENDING" -> Color(0xFFD97706)
+                                        "REJECTED" -> Color(0xFFDC2626)
+                                        else -> DevLinkBlue
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .background(filterColor, CircleShape)
+                                    )
+                                    Text(
+                                        text = when (selectedStatusFilter) {
+                                            "APPROVED" -> "Approved"
+                                            "PENDING" -> "Pending"
+                                            "REJECTED" -> "Rejected"
+                                            else -> "All Status"
+                                        },
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DevLinkTextPrimary
+                                    )
                                     Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Request Skill",
-                                        tint = DevLinkBlue
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Filter",
+                                        tint = DevLinkTextSecondary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = filterDropdownExpanded,
+                                onDismissRequest = { filterDropdownExpanded = false }
+                            ) {
+                                listOf("ALL" to "All Status", "APPROVED" to "Approved", "PENDING" to "Pending", "REJECTED" to "Rejected").forEach { (key, label) ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                val dotColor = when (key) {
+                                                    "APPROVED" -> Color(0xFF059669)
+                                                    "PENDING" -> Color(0xFFD97706)
+                                                    "REJECTED" -> Color(0xFFDC2626)
+                                                    else -> DevLinkBlue
+                                                }
+                                                Box(modifier = Modifier.size(8.dp).background(dotColor, CircleShape))
+                                                Text(
+                                                    text = label,
+                                                    fontWeight = if (selectedStatusFilter == key) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (selectedStatusFilter == key) DevLinkBlue else DevLinkTextPrimary
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            selectedStatusFilter = key
+                                            filterDropdownExpanded = false
+                                        }
                                     )
                                 }
                             }
                         }
+                    }
 
-                        if (skillRequests.isEmpty()) {
-                            Text(
-                                text = "No active skill requests. Tap '+' to request an evaluation from a teacher.",
-                                fontSize = 13.sp,
-                                color = DevLinkTextSecondary
-                            )
-                        } else {
-                            skillRequests.forEach { req ->
-                                Card(
+                    // 3 Sub Tabs: Projects, Skills, Certificates
+                    val tabs = listOf("Projects", "Skills", "Certificates")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF1F5F9), RoundedCornerShape(10.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        tabs.forEachIndexed { index, tabTitle ->
+                            val isSelected = activeSubTab == index
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { activeSubTab = index },
+                                color = if (isSelected) Color.White else Color.Transparent,
+                                shadowElevation = if (isSelected) 1.dp else 0.dp,
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val tabIcon = when (index) {
+                                        0 -> Icons.Default.Folder
+                                        1 -> Icons.Default.Build
+                                        else -> Icons.Default.CardMembership
+                                    }
+                                    Icon(
+                                        imageVector = tabIcon,
+                                        contentDescription = null,
+                                        tint = if (isSelected) DevLinkBlue else DevLinkTextSecondary,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = tabTitle,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) DevLinkBlue else DevLinkTextSecondary
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Content for Selected Sub Tab with Status Filter applied
+                    when (activeSubTab) {
+                        0 -> {
+                            // PROJECTS TAB
+                            val filteredProjects = projects.filter { proj ->
+                                when (selectedStatusFilter) {
+                                    "APPROVED" -> proj.verificationStatus == VerificationStatus.APPROVED
+                                    "PENDING" -> proj.verificationStatus == VerificationStatus.PENDING
+                                    "REJECTED" -> proj.verificationStatus == VerificationStatus.REJECTED
+                                    else -> true
+                                }
+                            }
+
+                            if (filteredProjects.isEmpty()) {
+                                Surface(
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                    color = Color(0xFFF8FAFC),
+                                    shape = RoundedCornerShape(10.dp),
                                     border = BorderStroke(1.dp, DevLinkBorder)
                                 ) {
                                     Column(
-                                        modifier = Modifier.padding(12.dp),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(20.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                        Icon(
+                                            imageVector = Icons.Default.FolderOpen,
+                                            contentDescription = null,
+                                            tint = Color(0xFF94A3B8),
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = if (selectedStatusFilter == "ALL") "No projects uploaded yet." else "No $selectedStatusFilter projects found.",
+                                            fontSize = 13.sp,
+                                            color = DevLinkTextSecondary
+                                        )
+                                    }
+                                }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    filteredProjects.forEach { proj ->
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { onProjectClick(proj) },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                            border = BorderStroke(1.dp, DevLinkBorder)
                                         ) {
-                                            Text(
-                                                text = req.skillName,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp,
-                                                color = DevLinkTextPrimary
-                                            )
+                                            Column(modifier = Modifier.padding(12.dp)) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(proj.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DevLinkTextPrimary)
 
-                                            val (statusBg, statusFg, statusLabel) = when (req.status) {
-                                                SkillStatus.PENDING -> Triple(Color(0xFFFEF3C7), Color(0xFF92400E), "PENDING")
-                                                SkillStatus.MEET -> Triple(Color(0xFFEDE9FE), Color(0xFF5B21B6), "MEETING SCHEDULED")
-                                                SkillStatus.ACCEPTED -> Triple(Color(0xFFD1FAE5), Color(0xFF065F46), "APPROVED")
-                                                SkillStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFF991B1B), "REJECTED")
-                                            }
-
-                                            Surface(
-                                                color = statusBg,
-                                                shape = RoundedCornerShape(6.dp)
-                                            ) {
+                                                    if (isOwnProfile && proj.studentUserId == profile.userId) {
+                                                        var menuExpanded by remember { mutableStateOf(false) }
+                                                        Box {
+                                                            IconButton(
+                                                                onClick = { menuExpanded = true },
+                                                                modifier = Modifier.size(24.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.MoreVert,
+                                                                    contentDescription = "Options",
+                                                                    tint = DevLinkTextSecondary
+                                                                )
+                                                            }
+                                                            DropdownMenu(
+                                                                expanded = menuExpanded,
+                                                                onDismissRequest = { menuExpanded = false }
+                                                            ) {
+                                                                DropdownMenuItem(
+                                                                    text = { Text("Delete") },
+                                                                    onClick = {
+                                                                        onDeleteProject(proj.id)
+                                                                        menuExpanded = false
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
                                                 Text(
-                                                    text = statusLabel,
-                                                    fontSize = 10.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = statusFg,
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                )
-                                            }
-                                        }
-
-                                        if (req.teacherName.isNotBlank()) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Person,
-                                                    contentDescription = null,
-                                                    tint = DevLinkTextSecondary,
-                                                    modifier = Modifier.size(13.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    text = "Assigned Teacher: ${req.teacherName}",
+                                                    text = proj.description,
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis,
                                                     fontSize = 12.sp,
                                                     color = DevLinkTextSecondary
                                                 )
-                                            }
-                                        }
-
-                                        if (req.status == SkillStatus.MEET && !req.meetingDate.isNullOrBlank()) {
-                                            Surface(
-                                                color = Color(0xFFF5F3FF),
-                                                shape = RoundedCornerShape(8.dp),
-                                                border = BorderStroke(1.dp, Color(0xFFDDD6FE)),
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Column(modifier = Modifier.padding(8.dp)) {
-                                                    Text(
-                                                        text = "Meeting Scheduled: ${req.meetingDate}",
-                                                        fontSize = 11.sp,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        color = Color(0xFF5B21B6)
-                                                    )
-                                                    if (!req.meetingNotes.isNullOrBlank()) {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(14.dp))
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(proj.likeCount.toString(), fontSize = 12.sp, color = DevLinkTextSecondary)
+                                                    }
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(Icons.Default.Comment, contentDescription = null, tint = DevLinkBlue, modifier = Modifier.size(14.dp))
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(proj.commentCount.toString(), fontSize = 12.sp, color = DevLinkTextSecondary)
+                                                    }
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                    Surface(
+                                                        color = when (proj.verificationStatus) {
+                                                            VerificationStatus.APPROVED -> Color(0xFFD1FAE5)
+                                                            VerificationStatus.REJECTED -> Color(0xFFFEE2E2)
+                                                            else -> Color(0xFFFEF3C7)
+                                                        },
+                                                        shape = RoundedCornerShape(6.dp)
+                                                    ) {
                                                         Text(
-                                                            text = "Notes: ${req.meetingNotes}",
-                                                            fontSize = 11.sp,
-                                                            color = DevLinkTextSecondary
+                                                            text = proj.verificationStatus.name,
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = when (proj.verificationStatus) {
+                                                                VerificationStatus.APPROVED -> Color(0xFF065F46)
+                                                                VerificationStatus.REJECTED -> Color(0xFFDC2626)
+                                                                else -> Color(0xFF92400E)
+                                                            },
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                                         )
                                                     }
                                                 }
                                             }
                                         }
-
-                                        if (req.status == SkillStatus.REJECTED && !req.rejectionReason.isNullOrBlank()) {
-                                            Surface(
-                                                color = Color(0xFFFEF2F2),
-                                                shape = RoundedCornerShape(8.dp),
-                                                border = BorderStroke(1.dp, Color(0xFFFECACA)),
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Text(
-                                                    text = "Rejection Reason: ${req.rejectionReason}",
-                                                    fontSize = 11.sp,
-                                                    color = Color(0xFF991B1B),
-                                                    modifier = Modifier.padding(8.dp)
-                                                )
-                                            }
-                                        }
-
-                                        if (!req.createdAt.isNullOrBlank()) {
-                                            Text(
-                                                text = "Requested on ${req.createdAt.take(10)}",
-                                                fontSize = 10.sp,
-                                                color = Color(0xFF94A3B8)
-                                            )
-                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                }
-            }
-
-            // Badges Section
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, DevLinkBorder),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = "Earned Badges",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = DevLinkTextPrimary
-                    )
-
-                    val badgeList = profile.badges
-                    if (badgeList.isEmpty()) {
-                        Text(
-                            text = "No badges earned yet. Complete verifications to unlock badges!",
-                            fontSize = 13.sp,
-                            color = DevLinkTextSecondary
-                        )
-                    } else {
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            badgeList.forEach { badge ->
-                                val badgeBg = when (badge) {
-                                    "Android Developer" -> Color(0xFFECFDF5)
-                                    "Top Contributor" -> Color(0xFFFEF3C7)
-                                    "Hackathon Winner" -> Color(0xFFF3E8FF)
-                                    else -> Color(0xFFF1F5F9)
+                        1 -> {
+                            // SKILLS TAB
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Skill Requests",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = DevLinkTextSecondary
+                                )
+                                if (isOwnProfile) {
+                                    TextButton(
+                                        onClick = { showAddSkillDialog = true },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = null,
+                                            tint = DevLinkBlue,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Request Skill", fontSize = 12.sp, color = DevLinkBlue, fontWeight = FontWeight.Bold)
+                                    }
                                 }
-                                val badgeText = when (badge) {
-                                    "Android Developer" -> Color(0xFF047857)
-                                    "Top Contributor" -> Color(0xFFB45309)
-                                    "Hackathon Winner" -> Color(0xFF6B21A8)
-                                    else -> DevLinkTextPrimary
+                            }
+
+                            val filteredSkillRequests = skillRequests.filter { req ->
+                                when (selectedStatusFilter) {
+                                    "APPROVED" -> req.status == SkillStatus.ACCEPTED
+                                    "PENDING" -> req.status == SkillStatus.PENDING || req.status == SkillStatus.MEET
+                                    "REJECTED" -> req.status == SkillStatus.REJECTED
+                                    else -> true
                                 }
+                            }
+
+                            if (filteredSkillRequests.isEmpty()) {
                                 Surface(
-                                    color = badgeBg,
-                                    shape = RoundedCornerShape(12.dp)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = Color(0xFFF8FAFC),
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, DevLinkBorder)
                                 ) {
-                                    Text(
-                                        text = badge,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = badgeText,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Projects Section
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, DevLinkBorder),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = "Projects",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = DevLinkTextPrimary
-                    )
-
-                    if (projects.isEmpty()) {
-                        Text("No projects uploaded yet.", fontSize = 13.sp, color = DevLinkTextSecondary)
-                    } else {
-                        projects.forEach { proj ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onProjectClick(proj) },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                                border = BorderStroke(1.dp, DevLinkBorder)
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(20.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        Text(proj.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DevLinkTextPrimary)
-                                        
-                                        if (isOwnProfile && proj.studentUserId == profile.userId) {
-                                            var menuExpanded by remember { mutableStateOf(false) }
-                                            Box {
-                                                IconButton(
-                                                    onClick = { menuExpanded = true },
-                                                    modifier = Modifier.size(24.dp)
+                                        Icon(
+                                            imageVector = Icons.Default.Build,
+                                            contentDescription = null,
+                                            tint = Color(0xFF94A3B8),
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = if (selectedStatusFilter == "ALL") "No skill requests submitted yet." else "No $selectedStatusFilter skill requests found.",
+                                            fontSize = 13.sp,
+                                            color = DevLinkTextSecondary
+                                        )
+                                    }
+                                }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    filteredSkillRequests.forEach { req ->
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                            border = BorderStroke(1.dp, DevLinkBorder)
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.MoreVert,
-                                                        contentDescription = "Options",
-                                                        tint = DevLinkTextSecondary
+                                                    Text(
+                                                        text = req.skillName,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 14.sp,
+                                                        color = DevLinkTextPrimary
                                                     )
+
+                                                    val (statusBg, statusFg, statusLabel) = when (req.status) {
+                                                        SkillStatus.PENDING -> Triple(Color(0xFFFEF3C7), Color(0xFF92400E), "PENDING")
+                                                        SkillStatus.MEET -> Triple(Color(0xFFEDE9FE), Color(0xFF5B21B6), "MEETING SCHEDULED")
+                                                        SkillStatus.ACCEPTED -> Triple(Color(0xFFD1FAE5), Color(0xFF065F46), "APPROVED")
+                                                        SkillStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFF991B1B), "REJECTED")
+                                                    }
+
+                                                    Surface(
+                                                        color = statusBg,
+                                                        shape = RoundedCornerShape(6.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = statusLabel,
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = statusFg,
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                        )
+                                                    }
                                                 }
-                                                DropdownMenu(
-                                                    expanded = menuExpanded,
-                                                    onDismissRequest = { menuExpanded = false }
-                                                ) {
-                                                    DropdownMenuItem(
-                                                        text = { Text("Delete") },
-                                                        onClick = {
-                                                            onDeleteProject(proj.id)
-                                                            menuExpanded = false
+
+                                                if (req.teacherName.isNotBlank()) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Person,
+                                                            contentDescription = null,
+                                                            tint = DevLinkTextSecondary,
+                                                            modifier = Modifier.size(13.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(
+                                                            text = "Assigned Teacher: ${req.teacherName}",
+                                                            fontSize = 12.sp,
+                                                            color = DevLinkTextSecondary
+                                                        )
+                                                    }
+                                                }
+
+                                                if (req.status == SkillStatus.MEET && !req.meetingDate.isNullOrBlank()) {
+                                                    Surface(
+                                                        color = Color(0xFFF5F3FF),
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        border = BorderStroke(1.dp, Color(0xFFDDD6FE)),
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Column(modifier = Modifier.padding(8.dp)) {
+                                                            Text(
+                                                                text = "Meeting Scheduled: ${req.meetingDate}",
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                                color = Color(0xFF5B21B6)
+                                                            )
+                                                            if (!req.meetingNotes.isNullOrBlank()) {
+                                                                Text(
+                                                                    text = "Notes: ${req.meetingNotes}",
+                                                                    fontSize = 11.sp,
+                                                                    color = DevLinkTextSecondary
+                                                                )
+                                                            }
                                                         }
+                                                    }
+                                                }
+
+                                                if (req.status == SkillStatus.REJECTED && !req.rejectionReason.isNullOrBlank()) {
+                                                    Surface(
+                                                        color = Color(0xFFFEF2F2),
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        border = BorderStroke(1.dp, Color(0xFFFECACA)),
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Text(
+                                                            text = "Rejection Reason: ${req.rejectionReason}",
+                                                            fontSize = 11.sp,
+                                                            color = Color(0xFF991B1B),
+                                                            modifier = Modifier.padding(8.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                if (!req.createdAt.isNullOrBlank()) {
+                                                    Text(
+                                                        text = "Requested on ${req.createdAt.take(10)}",
+                                                        fontSize = 10.sp,
+                                                        color = Color(0xFF94A3B8)
                                                     )
                                                 }
                                             }
                                         }
                                     }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = proj.description,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontSize = 12.sp,
-                                        color = DevLinkTextSecondary
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(14.dp))
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(proj.likeCount.toString(), fontSize = 12.sp, color = DevLinkTextSecondary)
-                                        }
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.Comment, contentDescription = null, tint = DevLinkBlue, modifier = Modifier.size(14.dp))
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(proj.commentCount.toString(), fontSize = 12.sp, color = DevLinkTextSecondary)
-                                        }
-                                        Spacer(modifier = Modifier.weight(1f))
-                                        Surface(
-                                            color = when (proj.verificationStatus) {
-                                                VerificationStatus.APPROVED -> Color(0xFFD1FAE5)
-                                                VerificationStatus.REJECTED -> Color(0xFFFEE2E2)
-                                                else -> Color(0xFFFEF3C7)
-                                            },
-                                            shape = RoundedCornerShape(6.dp)
-                                        ) {
-                                            Text(
-                                                text = proj.verificationStatus.name,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = when (proj.verificationStatus) {
-                                                    VerificationStatus.APPROVED -> Color(0xFF065F46)
-                                                    VerificationStatus.REJECTED -> Color(0xFFDC2626)
-                                                    else -> Color(0xFF92400E)
-                                                },
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                    }
                                 }
                             }
                         }
-                    }
-                }
-            }
+                        2 -> {
+                            // CERTIFICATES TAB
+                            val filteredCertificates = certificates.filter { cert ->
+                                when (selectedStatusFilter) {
+                                    "APPROVED" -> cert.verificationStatus == VerificationStatus.APPROVED
+                                    "PENDING" -> cert.verificationStatus == VerificationStatus.PENDING
+                                    "REJECTED" -> cert.verificationStatus == VerificationStatus.REJECTED
+                                    else -> true
+                                }
+                            }
 
-            // Certificates Section
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, DevLinkBorder),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = "Certificates",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = DevLinkTextPrimary
-                    )
-
-                    if (certificates.isEmpty()) {
-                        Text("No certificates uploaded yet.", fontSize = 13.sp, color = DevLinkTextSecondary)
-                    } else {
-                        certificates.forEach { cert ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onCertificateClick(cert) },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                                border = BorderStroke(1.dp, DevLinkBorder)
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                            if (filteredCertificates.isEmpty()) {
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = Color(0xFFF8FAFC),
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, DevLinkBorder)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(20.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        Text(cert.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DevLinkTextPrimary)
-                                        Surface(
-                                            color = when (cert.verificationStatus) {
-                                                VerificationStatus.APPROVED -> Color(0xFFD1FAE5)
-                                                VerificationStatus.REJECTED -> Color(0xFFFEE2E2)
-                                                else -> Color(0xFFFEF3C7)
-                                            },
-                                            shape = RoundedCornerShape(6.dp)
-                                        ) {
-                                            Text(
-                                                text = cert.verificationStatus.name,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = when (cert.verificationStatus) {
-                                                    VerificationStatus.APPROVED -> Color(0xFF065F46)
-                                                    VerificationStatus.REJECTED -> Color(0xFFDC2626)
-                                                    else -> Color(0xFF92400E)
-                                                },
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text("Issued By: ${cert.issuingOrg}", fontSize = 12.sp, color = DevLinkTextSecondary, fontWeight = FontWeight.Medium)
-                                    if (cert.verificationStatus == VerificationStatus.REJECTED) {
+                                        Icon(
+                                            imageVector = Icons.Default.CardMembership,
+                                            contentDescription = null,
+                                            tint = Color(0xFF94A3B8),
+                                            modifier = Modifier.size(32.dp)
+                                        )
                                         Spacer(modifier = Modifier.height(6.dp))
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
+                                        Text(
+                                            text = if (selectedStatusFilter == "ALL") "No certificates uploaded yet." else "No $selectedStatusFilter certificates found.",
+                                            fontSize = 13.sp,
+                                            color = DevLinkTextSecondary
+                                        )
+                                    }
+                                }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    filteredCertificates.forEach { cert ->
+                                        Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .background(Color(0xFFFEF2F2), RoundedCornerShape(6.dp))
-                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                .clickable { onCertificateClick(cert) },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                            border = BorderStroke(1.dp, DevLinkBorder)
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Cancel,
-                                                contentDescription = null,
-                                                tint = Color(0xFFDC2626),
-                                                modifier = Modifier.size(14.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = if (!cert.teacherRemarks.isNullOrBlank()) "Feedback: ${cert.teacherRemarks}" else "Rejected by faculty • Tap to view details",
-                                                fontSize = 11.sp,
-                                                color = Color(0xFFB91C1C),
-                                                fontWeight = FontWeight.Medium,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
+                                            Column(modifier = Modifier.padding(12.dp)) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(cert.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DevLinkTextPrimary)
+                                                    Surface(
+                                                        color = when (cert.verificationStatus) {
+                                                            VerificationStatus.APPROVED -> Color(0xFFD1FAE5)
+                                                            VerificationStatus.REJECTED -> Color(0xFFFEE2E2)
+                                                            else -> Color(0xFFFEF3C7)
+                                                        },
+                                                        shape = RoundedCornerShape(6.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = cert.verificationStatus.name,
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = when (cert.verificationStatus) {
+                                                                VerificationStatus.APPROVED -> Color(0xFF065F46)
+                                                                VerificationStatus.REJECTED -> Color(0xFFDC2626)
+                                                                else -> Color(0xFF92400E)
+                                                            },
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                        )
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Text("Issued By: ${cert.issuingOrg}", fontSize = 12.sp, color = DevLinkTextSecondary, fontWeight = FontWeight.Medium)
+                                                if (cert.verificationStatus == VerificationStatus.REJECTED) {
+                                                    Spacer(modifier = Modifier.height(6.dp))
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .background(Color(0xFFFEF2F2), RoundedCornerShape(6.dp))
+                                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Cancel,
+                                                            contentDescription = null,
+                                                            tint = Color(0xFFDC2626),
+                                                            modifier = Modifier.size(14.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Text(
+                                                            text = if (!cert.teacherRemarks.isNullOrBlank()) "Feedback: ${cert.teacherRemarks}" else "Rejected by faculty • Tap to view details",
+                                                            fontSize = 11.sp,
+                                                            color = Color(0xFFB91C1C),
+                                                            fontWeight = FontWeight.Medium,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }

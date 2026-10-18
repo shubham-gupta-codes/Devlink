@@ -250,7 +250,7 @@ fun StudentFeedScreen(
                                                 .fillMaxWidth()
                                                 .heightIn(min = 180.dp, max = 260.dp)
                                                 .clip(RoundedCornerShape(12.dp))
-                                                .background(Color(0xFF0F172A)),
+                                                .background(Color(0xFFF1F5F9)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             AsyncImage(
@@ -274,7 +274,7 @@ fun StudentFeedScreen(
                                                         .width(220.dp)
                                                         .height(200.dp)
                                                         .clip(RoundedCornerShape(12.dp))
-                                                        .background(Color(0xFF0F172A)),
+                                                        .background(Color(0xFFF1F5F9)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     AsyncImage(
@@ -284,15 +284,16 @@ fun StudentFeedScreen(
                                                         modifier = Modifier.fillMaxSize()
                                                     )
                                                     Surface(
-                                                        color = Color.Black.copy(alpha = 0.65f),
+                                                        color = Color.White.copy(alpha = 0.9f),
                                                         shape = RoundedCornerShape(6.dp),
+                                                        border = BorderStroke(1.dp, DevLinkBorder),
                                                         modifier = Modifier
                                                             .align(Alignment.TopStart)
                                                             .padding(6.dp)
                                                     ) {
                                                         Text(
                                                             text = "${idx + 1}/${proj.imageUrls.size}",
-                                                            color = Color.White,
+                                                            color = DevLinkTextPrimary,
                                                             fontSize = 10.sp,
                                                             fontWeight = FontWeight.Bold,
                                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)

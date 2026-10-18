@@ -274,7 +274,7 @@ fun CertificateDetailsDialog(
                                     .fillMaxWidth()
                                     .heightIn(min = 180.dp, max = 280.dp)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFF0F172A)),
+                                    .background(Color(0xFFF1F5F9)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 SubcomposeAsyncImage(
