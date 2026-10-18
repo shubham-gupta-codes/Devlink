@@ -471,29 +471,14 @@ fun UserSearchRow(
                 .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .background(DevLinkBlueContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                if (!photoUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = photoUrl,
-                        contentDescription = "Avatar",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Text(
-                        text = (user.name ?: user.username).take(2).uppercase(),
-                        fontWeight = FontWeight.Bold,
-                        color = DevLinkBlue,
-                        fontSize = 14.sp
-                    )
-                }
-            }
+            com.zyproo.devlink.ui.common.UserAvatar(
+                model = user.photoUrl,
+                name = user.name ?: user.username,
+                modifier = Modifier.size(42.dp),
+                backgroundColor = DevLinkBlueContainer,
+                textColor = DevLinkBlue,
+                fontSize = 14.sp
+            )
 
             Spacer(modifier = Modifier.width(10.dp))
 

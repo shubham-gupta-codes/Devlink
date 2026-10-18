@@ -303,31 +303,14 @@ fun StudentSearchScreen(
                                     .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Avatar Box with photo or initials
-                                val photoUrl = student.photoUrl.toFullMediaUrl()
-                                Box(
-                                    modifier = Modifier
-                                        .size(52.dp)
-                                        .clip(CircleShape)
-                                        .background(DevLinkBlueContainer),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (!photoUrl.isNullOrBlank()) {
-                                        AsyncImage(
-                                            model = photoUrl,
-                                            contentDescription = "Avatar",
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
-                                    } else {
-                                        Text(
-                                            text = (student.name ?: student.username).take(2).uppercase(),
-                                            fontWeight = FontWeight.Bold,
-                                            color = DevLinkBlue,
-                                            fontSize = 16.sp
-                                        )
-                                    }
-                                }
+                                com.zyproo.devlink.ui.common.UserAvatar(
+                                    model = student.photoUrl,
+                                    name = student.name ?: student.username,
+                                    modifier = Modifier.size(52.dp),
+                                    backgroundColor = DevLinkBlueContainer,
+                                    textColor = DevLinkBlue,
+                                    fontSize = 16.sp
+                                )
 
                                 Spacer(modifier = Modifier.width(12.dp))
 

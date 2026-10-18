@@ -16,6 +16,7 @@ import javax.inject.Inject
 sealed class SplashDestination {
     data object Loading : SplashDestination()
     data object Onboarding : SplashDestination()
+    data object Login : SplashDestination()
     data class AlreadyLoggedIn(val route: String) : SplashDestination()
 }
 
@@ -30,13 +31,19 @@ class SplashViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val isLoggedIn = sessionManager.isLoggedInFlow.first()
+            val isOnboardingCompleted = sessionManager.onboardingCompletedFlow.first()
+
             val destination = if (isLoggedIn) {
                 val role = sessionManager.roleFlow.first()?.let(Role::fromString)
                 if (role != null) {
                     SplashDestination.AlreadyLoggedIn(DevLinkDestinations.homeRouteFor(role))
+                } else if (isOnboardingCompleted) {
+                    SplashDestination.Login
                 } else {
                     SplashDestination.Onboarding
                 }
+            } else if (isOnboardingCompleted) {
+                SplashDestination.Login
             } else {
                 SplashDestination.Onboarding
             }

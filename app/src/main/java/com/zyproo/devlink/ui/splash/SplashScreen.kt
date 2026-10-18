@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 @Composable
 fun SplashScreen(
     onNavigateToOnboarding: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     onNavigateToHome: (route: String) -> Unit,
     viewModel: SplashViewModel = hiltViewModel()
 ) {
@@ -32,6 +33,7 @@ fun SplashScreen(
     LaunchedEffect(destination) {
         when (val dest = destination) {
             is SplashDestination.Onboarding -> onNavigateToOnboarding()
+            is SplashDestination.Login -> onNavigateToLogin()
             is SplashDestination.AlreadyLoggedIn -> onNavigateToHome(dest.route)
             SplashDestination.Loading -> Unit // still deciding, show the logo
         }

@@ -49,7 +49,10 @@ private val onboardingPages = listOf(
 )
 
 @Composable
-fun OnboardingScreen(onFinishOnboarding: () -> Unit) {
+fun OnboardingScreen(
+    onFinishOnboarding: () -> Unit,
+    viewModel: OnboardingViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+) {
     val pagerState = rememberPagerState(pageCount = { onboardingPages.size })
     val scope = rememberCoroutineScope()
 
@@ -59,7 +62,10 @@ fun OnboardingScreen(onFinishOnboarding: () -> Unit) {
             .padding(24.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = onFinishOnboarding) {
+            TextButton(onClick = {
+                viewModel.completeOnboarding()
+                onFinishOnboarding()
+            }) {
                 Text("Skip")
             }
         }
@@ -80,6 +86,7 @@ fun OnboardingScreen(onFinishOnboarding: () -> Unit) {
             onClick = {
                 val isLastPage = pagerState.currentPage == onboardingPages.lastIndex
                 if (isLastPage) {
+                    viewModel.completeOnboarding()
                     onFinishOnboarding()
                 } else {
                     scope.launch {

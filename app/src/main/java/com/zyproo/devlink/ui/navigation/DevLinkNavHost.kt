@@ -40,6 +40,11 @@ fun DevLinkNavHost(navController: NavHostController = rememberNavController()) {
                         popUpTo(DevLinkDestinations.SPLASH) { inclusive = true }
                     }
                 },
+                onNavigateToLogin = {
+                    navController.navigate(DevLinkDestinations.LOGIN) {
+                        popUpTo(DevLinkDestinations.SPLASH) { inclusive = true }
+                    }
+                },
                 onNavigateToHome = { route ->
                     navController.navigate(route) {
                         popUpTo(DevLinkDestinations.SPLASH) { inclusive = true }

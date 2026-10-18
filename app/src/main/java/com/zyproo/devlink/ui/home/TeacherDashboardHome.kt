@@ -39,7 +39,8 @@ fun TeacherDashboardHome(
     onNavigateToAnalytics: () -> Unit,
     onNavigateToMessages: () -> Unit,
     onReviewProject: ((VerificationRequestResponse) -> Unit)? = null,
-    onReviewCertificate: ((VerificationRequestResponse) -> Unit)? = null
+    onReviewCertificate: ((VerificationRequestResponse) -> Unit)? = null,
+    onReviewSkill: ((SkillRequestResponse) -> Unit)? = null
 ) {
     val totalPending = skillsCount + projectsCount + certificatesCount
 
@@ -293,7 +294,11 @@ fun TeacherDashboardHome(
             // Recent Skills activity
             items(skillsQueue.take(3)) { item ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onReviewSkill?.invoke(item) ?: onNavigateToVerificationCenter("SKILL")
+                        },
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     border = BorderStroke(1.dp, DevLinkBorder)
@@ -304,20 +309,12 @@ fun TeacherDashboardHome(
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(DevLinkBlueContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = item.studentUsername.take(2).uppercase(),
-                                fontWeight = FontWeight.Bold,
-                                color = DevLinkBlue,
-                                fontSize = 13.sp
-                            )
-                        }
+                        com.zyproo.devlink.ui.common.UserAvatar(
+                            model = item.studentPhotoUrl,
+                            name = item.studentName.ifBlank { item.studentUsername },
+                            modifier = Modifier.size(40.dp),
+                            fontSize = 14.sp
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -366,30 +363,12 @@ fun TeacherDashboardHome(
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val projectThumb = item.projectDetails?.imageUrls?.firstOrNull()?.toFullMediaUrl()
-                        Surface(
+                        com.zyproo.devlink.ui.common.UserAvatar(
+                            model = item.projectDetails?.studentPhotoUrl,
+                            name = item.requestedByName.ifBlank { item.requestedByUsername },
                             modifier = Modifier.size(40.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            color = DevLinkBlueContainer
-                        ) {
-                            if (!projectThumb.isNullOrBlank()) {
-                                AsyncImage(
-                                    model = projectThumb,
-                                    contentDescription = "Project Logo",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Folder,
-                                        contentDescription = "Project Logo",
-                                        tint = DevLinkBlue,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                            }
-                        }
+                            fontSize = 14.sp
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -463,20 +442,12 @@ fun TeacherDashboardHome(
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(
+                        com.zyproo.devlink.ui.common.UserAvatar(
+                            model = item.certificateDetails?.studentPhotoUrl,
+                            name = item.requestedByName.ifBlank { item.requestedByUsername },
                             modifier = Modifier.size(40.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFFD1FAE5)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.Description,
-                                    contentDescription = "Certificate",
-                                    tint = Color(0xFF059669),
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                        }
+                            fontSize = 14.sp
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             val certTitle = item.certificateDetails?.title?.ifBlank { null } ?: item.entityName

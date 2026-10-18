@@ -781,6 +781,7 @@ fun DashboardScreen(
                             }
                             activeTab = 4
                         },
+                        onStartDirectChatClick = { showStartDirectChatDialog = true },
                         onMarkRead = { id -> skillViewModel.markNotificationAsRead(id) },
                         onAcceptInvite = { teamName ->
                             val invite = pendingInvites.find { it.teamName.lowercase() == teamName.lowercase() }
@@ -1404,6 +1405,7 @@ fun TeacherFlow(
     onConversationClick: (Long) -> Unit = {},
     onRefreshInbox: () -> Unit = {},
     onStartDirectChat: (String) -> Unit = {},
+    onStartDirectChatClick: () -> Unit = {},
     onMarkRead: (Long) -> Unit,
     onAcceptInvite: (String) -> Unit,
     onRejectInvite: (String) -> Unit,
@@ -1458,6 +1460,10 @@ fun TeacherFlow(
                 onReviewCertificate = { certReq ->
                     selectedCategory = "CERTIFICATE"
                     targetCertificateIdForReview = certReq.id
+                    onTabSelect(1)
+                },
+                onReviewSkill = { skillReq ->
+                    selectedCategory = "SKILL"
                     onTabSelect(1)
                 }
             )
@@ -1583,7 +1589,7 @@ fun TeacherFlow(
                 conversations = conversations,
                 isLoading = isLoadingInbox,
                 onConversationClick = onConversationClick,
-                onStartDirectChatClick = { onStartDirectChat("") },
+                onStartDirectChatClick = onStartDirectChatClick,
                 onCreateTeamClick = {},
                 showCreateTeam = false
             )

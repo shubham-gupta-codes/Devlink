@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -119,6 +120,8 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    private var searchJob: Job? = null
+
     fun searchStudents(
         query: String?,
         course: Course?,
@@ -128,7 +131,8 @@ class ProfileViewModel @Inject constructor(
         skill: String?,
         badge: String?
     ) {
-        viewModelScope.launch {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
             _uiState.update { it.copy(isSearching = true, searchError = null) }
             when (val result = repository.searchStudents(query, course, branch, admissionYear, semester, skill, badge)) {
                 is ApiResult.Success -> {

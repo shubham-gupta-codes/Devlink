@@ -41,7 +41,8 @@ data class SkillRequestResponse(
     val meetingDate: String?,
     val meetingNotes: String?,
     val rejectionReason: String?,
-    val createdAt: String
+    val createdAt: String,
+    val studentPhotoUrl: String? = null
 )
 
 data class NotificationResponse(

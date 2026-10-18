@@ -2,6 +2,7 @@ package com.zyproo.devlink.data.local
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.zyproo.devlink.data.remote.dto.AuthResponse
@@ -22,6 +23,7 @@ class SessionManager @Inject constructor(
         val EMAIL = stringPreferencesKey("email")
         val ROLE = stringPreferencesKey("role")
         val SERVER_HOST = stringPreferencesKey("server_host")
+        val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 
     val accessTokenFlow: Flow<String?> = dataStore.data.map { it[Keys.ACCESS_TOKEN] }
@@ -30,7 +32,13 @@ class SessionManager @Inject constructor(
     val isLoggedInFlow: Flow<Boolean> = dataStore.data.map { !it[Keys.ACCESS_TOKEN].isNullOrBlank() }
     val userIdFlow: Flow<Long?> = dataStore.data.map { it[Keys.USER_ID]?.toLongOrNull() }
     val usernameFlow: Flow<String?> = dataStore.data.map { it[Keys.USERNAME] }
+    val onboardingCompletedFlow: Flow<Boolean> = dataStore.data.map { it[Keys.ONBOARDING_COMPLETED] == true }
 
+    suspend fun setOnboardingCompleted(completed: Boolean = true) {
+        dataStore.edit { prefs ->
+            prefs[Keys.ONBOARDING_COMPLETED] = completed
+        }
+    }
 
     suspend fun saveSession(auth: AuthResponse) {
         dataStore.edit { prefs ->
@@ -50,6 +58,13 @@ class SessionManager @Inject constructor(
     }
 
     suspend fun clearSession() {
-        dataStore.edit { it.clear() }
+        dataStore.edit { prefs ->
+            prefs.remove(Keys.ACCESS_TOKEN)
+            prefs.remove(Keys.REFRESH_TOKEN)
+            prefs.remove(Keys.USER_ID)
+            prefs.remove(Keys.USERNAME)
+            prefs.remove(Keys.EMAIL)
+            prefs.remove(Keys.ROLE)
+        }
     }
 }
