@@ -26,11 +26,16 @@ import com.zyproo.devlink.data.remote.dto.*
 import com.zyproo.devlink.ui.theme.*
 
 import android.content.Intent
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.ui.platform.LocalContext
 import com.zyproo.devlink.common.formatRelativeTime
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -249,41 +254,148 @@ fun ProjectDetailsScreen(
                             lineHeight = 20.sp
                         )
 
-                        // Photos Gallery
+                        // Photos Gallery (Horizontal Swipe / Pager)
                         if (project.imageUrls.isNotEmpty()) {
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                project.imageUrls.forEachIndexed { idx, rawUrl ->
-                                    val imageUrl = rawUrl.toFullMediaUrl()
-                                    if (!imageUrl.isNullOrBlank()) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .heightIn(min = 200.dp, max = 340.dp)
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(Color(0xFF0F172A)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            AsyncImage(
-                                                model = imageUrl,
-                                                contentDescription = "Project Photo",
-                                                contentScale = ContentScale.Fit,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                            Surface(
-                                                color = Color.Black.copy(alpha = 0.65f),
-                                                shape = RoundedCornerShape(6.dp),
+                            if (project.imageUrls.size == 1) {
+                                val imageUrl = project.imageUrls.first().toFullMediaUrl()
+                                if (!imageUrl.isNullOrBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(min = 200.dp, max = 340.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Color(0xFF0F172A)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        AsyncImage(
+                                            model = imageUrl,
+                                            contentDescription = "Project Photo",
+                                            contentScale = ContentScale.Fit,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                }
+                            } else {
+                                val pagerState = rememberPagerState(pageCount = { project.imageUrls.size })
+                                val scope = rememberCoroutineScope()
+
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(min = 200.dp, max = 340.dp)
+                                    ) {
+                                        HorizontalPager(
+                                            state = pagerState,
+                                            modifier = Modifier.fillMaxSize(),
+                                            pageSpacing = 8.dp
+                                        ) { page ->
+                                            val imageUrl = project.imageUrls[page].toFullMediaUrl()
+                                            Box(
                                                 modifier = Modifier
-                                                    .align(Alignment.TopStart)
-                                                    .padding(8.dp)
+                                                    .fillMaxSize()
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(Color(0xFF0F172A)),
+                                                contentAlignment = Alignment.Center
                                             ) {
-                                                Text(
-                                                    text = "Photo ${idx + 1} of ${project.imageUrls.size}",
-                                                    color = Color.White,
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                                if (!imageUrl.isNullOrBlank()) {
+                                                    AsyncImage(
+                                                        model = imageUrl,
+                                                        contentDescription = "Project Photo ${page + 1}",
+                                                        contentScale = ContentScale.Fit,
+                                                        modifier = Modifier.fillMaxSize()
+                                                    )
+                                                }
+                                                // Photo counter badge
+                                                Surface(
+                                                    color = Color.Black.copy(alpha = 0.65f),
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    modifier = Modifier
+                                                        .align(Alignment.TopStart)
+                                                        .padding(8.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Photo ${page + 1} of ${project.imageUrls.size}",
+                                                        color = Color.White,
+                                                        fontSize = 11.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        // Left arrow button (if page > 0)
+                                        if (pagerState.currentPage > 0) {
+                                            IconButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .align(Alignment.CenterStart)
+                                                    .padding(start = 6.dp)
+                                                    .size(32.dp)
+                                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = "Previous Photo",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(18.dp)
                                                 )
                                             }
+                                        }
+
+                                        // Right arrow button (if page < lastIndex)
+                                        if (pagerState.currentPage < project.imageUrls.lastIndex) {
+                                            IconButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .align(Alignment.CenterEnd)
+                                                    .padding(end = 6.dp)
+                                                    .size(32.dp)
+                                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                    contentDescription = "Next Photo",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Dot indicators
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        repeat(project.imageUrls.size) { index ->
+                                            val isSelected = index == pagerState.currentPage
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(horizontal = 3.dp)
+                                                    .width(if (isSelected) 18.dp else 6.dp)
+                                                    .height(6.dp)
+                                                    .clip(RoundedCornerShape(3.dp))
+                                                    .background(if (isSelected) DevLinkBlue else Color(0xFFCBD5E1))
+                                                    .clickable {
+                                                        scope.launch {
+                                                            pagerState.animateScrollToPage(index)
+                                                        }
+                                                    }
+                                            )
                                         }
                                     }
                                 }
