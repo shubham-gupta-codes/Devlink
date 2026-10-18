@@ -41,4 +41,23 @@ class FileViewModel @Inject constructor(
             }
         }
     }
+
+    fun uploadMultipleFiles(uris: List<Uri>, onEachSuccess: (String) -> Unit) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUploading = true, error = null) }
+            for (uri in uris) {
+                when (val result = fileRepository.uploadFile(uri)) {
+                    is ApiResult.Success -> {
+                        _uiState.update { it.copy(uploadedUrl = result.data) }
+                        onEachSuccess(result.data)
+                    }
+                    is ApiResult.Error -> {
+                        _uiState.update { it.copy(error = result.message) }
+                    }
+                }
+            }
+            _uiState.update { it.copy(isUploading = false) }
+        }
+    }
 }

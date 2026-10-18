@@ -36,6 +36,7 @@ fun StudentProfileScreen(
     isOwnProfile: Boolean = true,
     approvedSkills: List<StudentSkillResponse> = emptyList(),
     skillsCatalog: List<SkillResponse> = emptyList(),
+    skillRequests: List<SkillRequestResponse> = emptyList(),
     projects: List<ProjectResponse> = emptyList(),
     certificates: List<CertificateResponse> = emptyList(),
     onRequestSkill: (Long) -> Unit = {},
@@ -535,6 +536,181 @@ fun StudentProfileScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Skill Verification Requests Section (Below Verified Skills)
+            if (isOwnProfile || skillRequests.isNotEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    border = BorderStroke(1.dp, DevLinkBorder),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FactCheck,
+                                    contentDescription = null,
+                                    tint = DevLinkBlue,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = "Skill Request Status",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = DevLinkTextPrimary
+                                )
+                            }
+                            if (isOwnProfile) {
+                                IconButton(
+                                    onClick = { showAddSkillDialog = true },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Request Skill",
+                                        tint = DevLinkBlue
+                                    )
+                                }
+                            }
+                        }
+
+                        if (skillRequests.isEmpty()) {
+                            Text(
+                                text = "No active skill requests. Tap '+' to request an evaluation from a teacher.",
+                                fontSize = 13.sp,
+                                color = DevLinkTextSecondary
+                            )
+                        } else {
+                            skillRequests.forEach { req ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                    border = BorderStroke(1.dp, DevLinkBorder)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = req.skillName,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp,
+                                                color = DevLinkTextPrimary
+                                            )
+
+                                            val (statusBg, statusFg, statusLabel) = when (req.status) {
+                                                SkillStatus.PENDING -> Triple(Color(0xFFFEF3C7), Color(0xFF92400E), "PENDING")
+                                                SkillStatus.MEET -> Triple(Color(0xFFEDE9FE), Color(0xFF5B21B6), "MEETING SCHEDULED")
+                                                SkillStatus.ACCEPTED -> Triple(Color(0xFFD1FAE5), Color(0xFF065F46), "APPROVED")
+                                                SkillStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFF991B1B), "REJECTED")
+                                            }
+
+                                            Surface(
+                                                color = statusBg,
+                                                shape = RoundedCornerShape(6.dp)
+                                            ) {
+                                                Text(
+                                                    text = statusLabel,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = statusFg,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+
+                                        if (req.teacherName.isNotBlank()) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Person,
+                                                    contentDescription = null,
+                                                    tint = DevLinkTextSecondary,
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = "Assigned Teacher: ${req.teacherName}",
+                                                    fontSize = 12.sp,
+                                                    color = DevLinkTextSecondary
+                                                )
+                                            }
+                                        }
+
+                                        if (req.status == SkillStatus.MEET && !req.meetingDate.isNullOrBlank()) {
+                                            Surface(
+                                                color = Color(0xFFF5F3FF),
+                                                shape = RoundedCornerShape(8.dp),
+                                                border = BorderStroke(1.dp, Color(0xFFDDD6FE)),
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Column(modifier = Modifier.padding(8.dp)) {
+                                                    Text(
+                                                        text = "Meeting Scheduled: ${req.meetingDate}",
+                                                        fontSize = 11.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = Color(0xFF5B21B6)
+                                                    )
+                                                    if (!req.meetingNotes.isNullOrBlank()) {
+                                                        Text(
+                                                            text = "Notes: ${req.meetingNotes}",
+                                                            fontSize = 11.sp,
+                                                            color = DevLinkTextSecondary
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (req.status == SkillStatus.REJECTED && !req.rejectionReason.isNullOrBlank()) {
+                                            Surface(
+                                                color = Color(0xFFFEF2F2),
+                                                shape = RoundedCornerShape(8.dp),
+                                                border = BorderStroke(1.dp, Color(0xFFFECACA)),
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text(
+                                                    text = "Rejection Reason: ${req.rejectionReason}",
+                                                    fontSize = 11.sp,
+                                                    color = Color(0xFF991B1B),
+                                                    modifier = Modifier.padding(8.dp)
+                                                )
+                                            }
+                                        }
+
+                                        if (!req.createdAt.isNullOrBlank()) {
+                                            Text(
+                                                text = "Requested on ${req.createdAt.take(10)}",
+                                                fontSize = 10.sp,
+                                                color = Color(0xFF94A3B8)
                                             )
                                         }
                                     }

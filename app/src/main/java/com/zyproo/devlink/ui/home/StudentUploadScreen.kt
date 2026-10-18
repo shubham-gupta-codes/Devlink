@@ -163,11 +163,13 @@ fun StudentUploadScreen(
                         )
 
                         val projectImagePicker = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.GetContent()
-                        ) { uri: Uri? ->
-                            uri?.let {
-                                if (projectImages.size < 5) {
-                                    fileViewModel.uploadFile(it) { uploadedUrl ->
+                            contract = ActivityResultContracts.GetMultipleContents()
+                        ) { uris: List<Uri> ->
+                            if (uris.isNotEmpty()) {
+                                val remaining = 5 - projectImages.size
+                                if (remaining > 0) {
+                                    val toUpload = uris.take(remaining)
+                                    fileViewModel.uploadMultipleFiles(toUpload) { uploadedUrl ->
                                         if (projectImages.size < 5) {
                                             projectImages.add(uploadedUrl)
                                         }
@@ -234,11 +236,11 @@ fun StudentUploadScreen(
                                     if (fileState.isUploading) {
                                         CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = DevLinkBlue)
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Uploading Screenshot...", fontSize = 13.sp, color = DevLinkBlue)
+                                        Text("Uploading Screenshots...", fontSize = 13.sp, color = DevLinkBlue)
                                     } else {
-                                        Icon(Icons.Default.Add, contentDescription = "Add Screenshot", tint = DevLinkBlue, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Add Screenshots", tint = DevLinkBlue, modifier = Modifier.size(18.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Text("Add Screenshot (${5 - projectImages.size} remaining)", fontSize = 13.sp, color = DevLinkBlue, fontWeight = FontWeight.SemiBold)
+                                        Text("Select Screenshots (${5 - projectImages.size} remaining)", fontSize = 13.sp, color = DevLinkBlue, fontWeight = FontWeight.SemiBold)
                                     }
                                 }
                             } else {

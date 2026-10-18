@@ -200,6 +200,10 @@ fun DashboardScreen(
 
     LaunchedEffect(activeTab) {
         homeSubScreen = "feed"
+        if (role == Role.STUDENT && activeTab == 4) {
+            skillViewModel.loadStudentRequests()
+            skillViewModel.loadStudentSkills()
+        }
     }
 
     val currentProfile = profileState.profile
@@ -730,6 +734,7 @@ fun DashboardScreen(
                             }
                         },
                         onRequestSkill = { skillId -> skillViewModel.requestSkillVerification(skillId) },
+                        skillRequests = skillState.studentRequests,
                         onUploadProject = { name, desc, tech, gh, demo, imgs ->
                             projectViewModel.uploadProject(name, desc, tech, gh, demo, imgs)
                         },
@@ -1250,6 +1255,7 @@ fun StudentFlow(
     onAcceptInvite: (String) -> Unit,
     onRejectInvite: (String) -> Unit,
     onRequestSkill: (Long) -> Unit,
+    skillRequests: List<SkillRequestResponse> = emptyList(),
     onUploadProject: (String, String, String, String?, String?, List<String>?) -> Unit,
     onUploadCertificate: (String, String, String, String, FileType) -> Unit,
     savedProjectIds: Set<Long> = emptySet(),
@@ -1327,6 +1333,7 @@ fun StudentFlow(
                     showContact = false,
                     approvedSkills = approvedSkills,
                     skillsCatalog = skillsCatalog,
+                    skillRequests = skillRequests,
                     projects = projects,
                     certificates = certificates,
                     onRequestSkill = onRequestSkill,
