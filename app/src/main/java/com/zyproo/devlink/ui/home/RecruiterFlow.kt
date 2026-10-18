@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zyproo.devlink.common.toFullMediaUrl
+import com.zyproo.devlink.common.formatDisplayDate
 import com.zyproo.devlink.data.remote.dto.*
 import com.zyproo.devlink.ui.job.JobViewModel
 import com.zyproo.devlink.ui.job.JobUiState
@@ -951,8 +952,8 @@ fun JobListItem(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Visibility / Active dates row
-            val fromDate = (job.startDate ?: job.createdAt).take(10)
-            val toDate = job.deadline.take(10)
+            val fromDate = formatDisplayDate(job.startDate ?: job.createdAt)
+            val toDate = formatDisplayDate(job.deadline)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)

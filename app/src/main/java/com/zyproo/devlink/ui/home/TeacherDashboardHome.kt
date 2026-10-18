@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zyproo.devlink.common.toFullMediaUrl
+import com.zyproo.devlink.common.formatDisplayDateTime
+import com.zyproo.devlink.common.formatMeetingDateTime
 import androidx.compose.ui.layout.ContentScale
 import com.zyproo.devlink.data.remote.dto.*
 import com.zyproo.devlink.ui.theme.*
@@ -323,11 +325,44 @@ fun TeacherDashboardHome(
                                 fontSize = 13.sp,
                                 color = DevLinkTextPrimary
                             )
-                            Text(
-                                text = "Submitted by @${item.studentUsername}",
-                                fontSize = 11.sp,
-                                color = DevLinkTextSecondary
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "By ${item.studentName.ifBlank { item.studentUsername }}",
+                                    fontSize = 11.sp,
+                                    color = DevLinkTextSecondary
+                                )
+                                Text(
+                                    text = "•",
+                                    fontSize = 11.sp,
+                                    color = DevLinkTextSecondary
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccessTime,
+                                        contentDescription = null,
+                                        tint = DevLinkTextSecondary,
+                                        modifier = Modifier.size(11.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = formatDisplayDateTime(item.createdAt),
+                                        fontSize = 10.sp,
+                                        color = DevLinkTextSecondary
+                                    )
+                                }
+                            }
+                            if (item.status == SkillStatus.MEET && !item.meetingDate.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Discussion: ${formatMeetingDateTime(item.meetingDate)}",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF1E40AF)
+                                )
+                            }
                         }
                         Surface(
                             color = Color(0xFFFEF3C7),
@@ -386,7 +421,7 @@ fun TeacherDashboardHome(
                                     fontSize = 11.sp,
                                     color = DevLinkTextSecondary
                                 )
-                                val dateFormatted = item.createdAt.take(16).replace("T", " ")
+                                val dateFormatted = formatDisplayDateTime(item.createdAt)
                                 Text(
                                     text = "•",
                                     fontSize = 11.sp,
@@ -406,6 +441,15 @@ fun TeacherDashboardHome(
                                         color = DevLinkTextSecondary
                                     )
                                 }
+                            }
+                            if (item.status == VerificationStatus.NEED_TO_TALK && !item.scheduleAt.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Discussion: ${formatMeetingDateTime(item.scheduleAt)}",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF1E40AF)
+                                )
                             }
                         }
                         Surface(
@@ -466,7 +510,7 @@ fun TeacherDashboardHome(
                                     fontSize = 11.sp,
                                     color = DevLinkTextSecondary
                                 )
-                                val dateFormatted = item.createdAt.take(16).replace("T", " ")
+                                val dateFormatted = formatDisplayDateTime(item.createdAt)
                                 Text(
                                     text = "•",
                                     fontSize = 11.sp,
@@ -486,6 +530,15 @@ fun TeacherDashboardHome(
                                         color = DevLinkTextSecondary
                                     )
                                 }
+                            }
+                            if (item.status == VerificationStatus.NEED_TO_TALK && !item.scheduleAt.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Discussion: ${formatMeetingDateTime(item.scheduleAt)}",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF1E40AF)
+                                )
                             }
                         }
                         Surface(

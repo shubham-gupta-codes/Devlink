@@ -32,6 +32,8 @@ import coil3.compose.AsyncImage
 import androidx.compose.foundation.BorderStroke
 import com.zyproo.devlink.common.Role
 import com.zyproo.devlink.common.toFullMediaUrl
+import com.zyproo.devlink.common.formatDisplayDateTime
+import com.zyproo.devlink.common.formatMeetingDateTime
 import com.zyproo.devlink.data.remote.dto.*
 import com.zyproo.devlink.ui.profile.EditProfileScreen
 import com.zyproo.devlink.ui.profile.ProfileViewModel
@@ -1888,13 +1890,33 @@ fun TeacherEvaluationQueueScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = DevLinkTextPrimary
                             )
-                            if (req.status == SkillStatus.MEET && !req.meetingNotes.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Scheduled: ${req.meetingDate?.take(10) ?: ""} - ${req.meetingNotes}",
-                                    fontSize = 12.sp,
-                                    color = Color.Gray
-                                )
+                            if (req.status == SkillStatus.MEET && !req.meetingDate.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Surface(
+                                    color = Color(0xFFEFF6FF),
+                                    shape = RoundedCornerShape(6.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFBFDBFE))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Event,
+                                            contentDescription = null,
+                                            tint = Color(0xFF2563EB),
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        val notesSuffix = if (!req.meetingNotes.isNullOrBlank()) " • ${req.meetingNotes}" else ""
+                                        Text(
+                                            text = "Discussion: ${formatMeetingDateTime(req.meetingDate)}$notesSuffix",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color(0xFF1E40AF)
+                                        )
+                                    }
+                                }
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(
@@ -1902,7 +1924,7 @@ fun TeacherEvaluationQueueScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val dateFormatted = req.createdAt.take(16).replace("T", " ")
+                                val dateFormatted = formatDisplayDateTime(req.createdAt)
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -2032,7 +2054,7 @@ fun TeacherEvaluationQueueScreen(
                         val studentProfile = rankings.find { it.username == req.studentUsername }
                         val photoUrl = studentProfile?.photoUrl?.toFullMediaUrl()
                         val studentName = req.studentName
-                        val dateFormatted = req.createdAt.take(16).replace("T", " ")
+                        val dateFormatted = formatDisplayDateTime(req.createdAt)
 
                         Row(
                             modifier = Modifier

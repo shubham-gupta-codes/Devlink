@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zyproo.devlink.common.toFullMediaUrl
+import com.zyproo.devlink.common.formatDisplayDateTime
+import com.zyproo.devlink.common.formatMeetingDateTime
 import com.zyproo.devlink.data.remote.dto.*
 import com.zyproo.devlink.ui.theme.*
 
@@ -166,6 +168,34 @@ fun TeacherCertificateReviewList(
                             }
                         }
 
+                        if (req.status == VerificationStatus.NEED_TO_TALK && !req.scheduleAt.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Surface(
+                                color = Color(0xFFEFF6FF),
+                                shape = RoundedCornerShape(6.dp),
+                                border = BorderStroke(1.dp, Color(0xFFBFDBFE))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Event,
+                                        contentDescription = null,
+                                        tint = Color(0xFF2563EB),
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Discussion: ${formatMeetingDateTime(req.scheduleAt)}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF1E40AF)
+                                    )
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Row(
@@ -173,7 +203,7 @@ fun TeacherCertificateReviewList(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            val dateFormatted = req.createdAt.take(16).replace("T", " ")
+                            val dateFormatted = formatDisplayDateTime(req.createdAt)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -309,7 +339,7 @@ fun TeacherCertificateReviewList(
                     val studentProfile = rankings.find { it.username == req.requestedByUsername }
                     val photoUrl = req.certificateDetails?.studentPhotoUrl?.toFullMediaUrl() ?: studentProfile?.photoUrl?.toFullMediaUrl()
                     val studentName = req.requestedByName
-                    val dateFormatted = req.createdAt.take(16).replace("T", " ")
+                    val dateFormatted = formatDisplayDateTime(req.createdAt)
 
                     Row(
                         modifier = Modifier

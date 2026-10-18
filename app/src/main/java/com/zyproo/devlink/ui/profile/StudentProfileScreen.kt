@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zyproo.devlink.common.toFullMediaUrl
+import com.zyproo.devlink.common.formatMeetingDateTime
+import com.zyproo.devlink.common.formatDisplayDate
+import com.zyproo.devlink.common.formatDisplayDateTime
 import com.zyproo.devlink.data.remote.dto.*
 import com.zyproo.devlink.ui.theme.*
 import com.zyproo.devlink.ui.home.StudentUploadScreen
@@ -793,6 +796,13 @@ fun StudentProfileScreen(
                                                         Spacer(modifier = Modifier.width(4.dp))
                                                         Text(proj.commentCount.toString(), fontSize = 12.sp, color = DevLinkTextSecondary)
                                                     }
+                                                    if (!proj.createdAt.isNullOrBlank()) {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(Icons.Default.AccessTime, contentDescription = null, tint = DevLinkTextSecondary, modifier = Modifier.size(13.dp))
+                                                            Spacer(modifier = Modifier.width(3.dp))
+                                                            Text(formatDisplayDate(proj.createdAt), fontSize = 11.sp, color = DevLinkTextSecondary)
+                                                        }
+                                                    }
                                                     Spacer(modifier = Modifier.weight(1f))
                                                     Surface(
                                                         color = when (proj.verificationStatus) {
@@ -957,16 +967,30 @@ fun StudentProfileScreen(
                                                         border = BorderStroke(1.dp, Color(0xFFDDD6FE)),
                                                         modifier = Modifier.fillMaxWidth()
                                                     ) {
-                                                        Column(modifier = Modifier.padding(8.dp)) {
+                                                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Event,
+                                                                    contentDescription = null,
+                                                                    tint = Color(0xFF7C3AED),
+                                                                    modifier = Modifier.size(14.dp)
+                                                                )
+                                                                Text(
+                                                                    text = "Meeting Scheduled",
+                                                                    fontSize = 12.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = Color(0xFF5B21B6)
+                                                                )
+                                                            }
                                                             Text(
-                                                                text = "Meeting Scheduled: ${req.meetingDate}",
-                                                                fontSize = 11.sp,
+                                                                text = formatMeetingDateTime(req.meetingDate),
+                                                                fontSize = 12.sp,
                                                                 fontWeight = FontWeight.SemiBold,
-                                                                color = Color(0xFF5B21B6)
+                                                                color = Color(0xFF6D28D9)
                                                             )
                                                             if (!req.meetingNotes.isNullOrBlank()) {
                                                                 Text(
-                                                                    text = "Notes: ${req.meetingNotes}",
+                                                                    text = "Topic: ${req.meetingNotes}",
                                                                     fontSize = 11.sp,
                                                                     color = DevLinkTextSecondary
                                                                 )
@@ -993,7 +1017,7 @@ fun StudentProfileScreen(
 
                                                 if (!req.createdAt.isNullOrBlank()) {
                                                     Text(
-                                                        text = "Requested on ${req.createdAt.take(10)}",
+                                                        text = "Requested on ${formatDisplayDate(req.createdAt)}",
                                                         fontSize = 10.sp,
                                                         color = Color(0xFF94A3B8)
                                                     )
@@ -1109,6 +1133,32 @@ fun StudentProfileScreen(
                                                         )
                                                     }
                                                 }
+                                                if (cert.verificationStatus == VerificationStatus.NEED_TO_TALK) {
+                                                    Spacer(modifier = Modifier.height(6.dp))
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .background(Color(0xFFEFF6FF), RoundedCornerShape(6.dp))
+                                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Chat,
+                                                            contentDescription = null,
+                                                            tint = Color(0xFF2563EB),
+                                                            modifier = Modifier.size(14.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Text(
+                                                            text = if (!cert.teacherRemarks.isNullOrBlank()) "Discussion: ${cert.teacherRemarks}" else "Discussion / Viva requested by faculty",
+                                                            fontSize = 11.sp,
+                                                            color = Color(0xFF1D4ED8),
+                                                            fontWeight = FontWeight.Medium,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -1182,7 +1232,7 @@ fun StudentProfileScreen(
                                                 color = DevLinkTextPrimary
                                             )
                                             Text(
-                                                text = feedback.createdAt.take(10),
+                                                text = formatDisplayDate(feedback.createdAt),
                                                 fontSize = 11.sp,
                                                 color = DevLinkTextSecondary
                                             )

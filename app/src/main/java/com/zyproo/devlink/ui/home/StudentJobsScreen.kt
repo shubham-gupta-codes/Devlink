@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.zyproo.devlink.common.formatDisplayDate
 import com.zyproo.devlink.common.formatRelativeTime
 import com.zyproo.devlink.common.toFullMediaUrl
 import com.zyproo.devlink.data.remote.dto.*
@@ -368,7 +369,7 @@ fun StudentJobsScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.DateRange, contentDescription = null, tint = DevLinkBlue, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Apply before: ${job.deadline.take(10)}", fontSize = 13.sp, color = DevLinkTextSecondary)
+                            Text(text = "Apply before: ${formatDisplayDate(job.deadline)}", fontSize = 13.sp, color = DevLinkTextSecondary)
                         }
                         val timeAgo = formatRelativeTime(job.createdAt)
                         if (timeAgo.isNotEmpty()) {
