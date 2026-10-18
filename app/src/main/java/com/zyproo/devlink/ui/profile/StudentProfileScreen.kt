@@ -77,27 +77,36 @@ fun StudentProfileScreen(
         ) {
             // Header Bar when navigating back
             if (onBackClick != null) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    color = Color.White,
+                    shadowElevation = 1.dp,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close profile",
-                            tint = DevLinkTextPrimary
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = onBackClick,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close profile",
+                                tint = DevLinkTextPrimary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${profile.name ?: profile.username}'s Profile",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DevLinkTextPrimary
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "${profile.name ?: profile.username}'s Profile",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DevLinkTextPrimary
-                    )
                 }
             }
 
@@ -483,7 +492,7 @@ fun StudentProfileScreen(
 
                     if (approvedSkills.isEmpty()) {
                         Text(
-                            text = "No skills verified yet. Click '+' to request evaluation.",
+                            text = "No skills available yet.",
                             fontSize = 13.sp,
                             color = DevLinkTextSecondary
                         )
@@ -530,8 +539,125 @@ fun StudentProfileScreen(
                 }
             }
 
-            // Sub-Status Tabs Section (Below Verified Skills): Project, Skill, Certificate with Dropdown Filter
+            // Teacher Reviews Section (Placed below Verified Skills)
             Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, DevLinkBorder),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.RateReview,
+                                contentDescription = null,
+                                tint = DevLinkBlue,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "Teacher Reviews & Endorsements",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = DevLinkTextPrimary
+                            )
+                        }
+                        if (viewerRole == com.zyproo.devlink.common.Role.TEACHER && onAddFeedback != null) {
+                            TextButton(
+                                onClick = { showAddFeedbackDialog = true },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Review",
+                                    tint = DevLinkBlue,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (teacherFeedbacks.isNotEmpty()) "Edit" else "Add Review",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DevLinkBlue
+                                )
+                            }
+                        }
+                    }
+
+                    if (teacherFeedbacks.isEmpty()) {
+                        Text(
+                            text = "No teacher reviews submitted for this student yet.",
+                            fontSize = 13.sp,
+                            color = DevLinkTextSecondary
+                        )
+                    } else {
+                        teacherFeedbacks.forEach { feedback ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                border = BorderStroke(1.dp, DevLinkBorder)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = feedback.teacherName,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = DevLinkTextPrimary
+                                        )
+                                        Text(
+                                            text = formatDisplayDate(feedback.createdAt),
+                                            fontSize = 11.sp,
+                                            color = DevLinkTextSecondary
+                                        )
+                                    }
+                                    if (!feedback.department.isNullOrBlank()) {
+                                        Text(
+                                            text = feedback.department ?: "",
+                                            fontSize = 11.sp,
+                                            color = DevLinkBlue,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                    Text(
+                                        text = feedback.content,
+                                        fontSize = 13.sp,
+                                        color = DevLinkTextPrimary,
+                                        lineHeight = 18.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Sub-Status Tabs Section (Below Teacher Reviews): Project, Skill, Certificate with Dropdown Filter
+            // Only visible to the Teacher and the Student who owns this profile
+            val canViewVerificationStatus = isOwnProfile || viewerRole == com.zyproo.devlink.common.Role.TEACHER
+            if (canViewVerificationStatus) {
+                Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -1168,9 +1294,9 @@ fun StudentProfileScreen(
                     }
                 }
             }
-
-            // Teacher Reviews Section (VISIBLE TO TEACHERS AND RECRUITERS)
-            if (viewerRole == com.zyproo.devlink.common.Role.RECRUITER || viewerRole == com.zyproo.devlink.common.Role.TEACHER) {
+        } else {
+                // Verified Projects Showcase Section (For Recruiters and Visiting Students)
+                val approvedProjects = projects.filter { it.verificationStatus == VerificationStatus.APPROVED }
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1182,75 +1308,231 @@ fun StudentProfileScreen(
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.RateReview,
+                                imageVector = Icons.Default.FolderOpen,
                                 contentDescription = null,
                                 tint = DevLinkBlue,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "Teacher Reviews & Endorsements",
+                                text = "Verified Projects",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
+                                fontSize = 16.sp,
                                 color = DevLinkTextPrimary
                             )
+                            if (approvedProjects.isNotEmpty()) {
+                                Surface(
+                                    color = DevLinkBlueContainer,
+                                    shape = CircleShape
+                                ) {
+                                    Text(
+                                        text = approvedProjects.size.toString(),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DevLinkBlue,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
                         }
 
-                        if (teacherFeedbacks.isEmpty()) {
-                            Text(
-                                text = "No teacher reviews submitted for this student yet.",
-                                fontSize = 13.sp,
-                                color = DevLinkTextSecondary
-                            )
-                        } else {
-                            teacherFeedbacks.forEach { feedback ->
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                                    border = BorderStroke(1.dp, DevLinkBorder)
+                        if (approvedProjects.isEmpty()) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = Color(0xFFF8FAFC),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, DevLinkBorder)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(20.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Column(
-                                        modifier = Modifier.padding(12.dp),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    Icon(
+                                        imageVector = Icons.Default.FolderOpen,
+                                        contentDescription = null,
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "No verified projects available yet.",
+                                        fontSize = 13.sp,
+                                        color = DevLinkTextSecondary
+                                    )
+                                }
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                approvedProjects.forEach { proj ->
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onProjectClick(proj) },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                        border = BorderStroke(1.dp, DevLinkBorder)
                                     ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
+                                        Column(modifier = Modifier.padding(12.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = proj.name,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 14.sp,
+                                                    color = DevLinkTextPrimary
+                                                )
+                                                Surface(
+                                                    color = Color(0xFFD1FAE5),
+                                                    shape = RoundedCornerShape(6.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Verified",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF065F46),
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
                                             Text(
-                                                text = feedback.teacherName,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 13.sp,
-                                                color = DevLinkTextPrimary
-                                            )
-                                            Text(
-                                                text = formatDisplayDate(feedback.createdAt),
-                                                fontSize = 11.sp,
+                                                text = proj.description,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                                fontSize = 12.sp,
                                                 color = DevLinkTextSecondary
                                             )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(14.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(proj.likeCount.toString(), fontSize = 12.sp, color = DevLinkTextSecondary)
+                                                }
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(Icons.Default.Comment, contentDescription = null, tint = DevLinkBlue, modifier = Modifier.size(14.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(proj.commentCount.toString(), fontSize = 12.sp, color = DevLinkTextSecondary)
+                                                }
+                                                if (!proj.createdAt.isNullOrBlank()) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(Icons.Default.AccessTime, contentDescription = null, tint = DevLinkTextSecondary, modifier = Modifier.size(13.dp))
+                                                        Spacer(modifier = Modifier.width(3.dp))
+                                                        Text(formatDisplayDate(proj.createdAt), fontSize = 11.sp, color = DevLinkTextSecondary)
+                                                    }
+                                                }
+                                            }
                                         }
-                                        if (!feedback.department.isNullOrBlank()) {
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Also display Verified Certifications if available
+                val approvedCertificates = certificates.filter { it.verificationStatus == VerificationStatus.APPROVED }
+                if (approvedCertificates.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = BorderStroke(1.dp, DevLinkBorder),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.WorkspacePremium,
+                                    contentDescription = null,
+                                    tint = DevLinkBlue,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "Verified Certifications",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = DevLinkTextPrimary
+                                )
+                                Surface(
+                                    color = DevLinkBlueContainer,
+                                    shape = CircleShape
+                                ) {
+                                    Text(
+                                        text = approvedCertificates.size.toString(),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DevLinkBlue,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                approvedCertificates.forEach { cert ->
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onCertificateClick(cert) },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                        border = BorderStroke(1.dp, DevLinkBorder)
+                                    ) {
+                                        Column(modifier = Modifier.padding(12.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = cert.title,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 14.sp,
+                                                    color = DevLinkTextPrimary
+                                                )
+                                                Surface(
+                                                    color = Color(0xFFD1FAE5),
+                                                    shape = RoundedCornerShape(6.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Verified",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF065F46),
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(2.dp))
                                             Text(
-                                                text = feedback.department ?: "",
-                                                fontSize = 11.sp,
-                                                color = DevLinkBlue,
-                                                fontWeight = FontWeight.SemiBold
+                                                text = "Issued By: ${cert.issuingOrg}",
+                                                fontSize = 12.sp,
+                                                color = DevLinkTextSecondary,
+                                                fontWeight = FontWeight.Medium
                                             )
                                         }
-                                        Text(
-                                            text = feedback.content,
-                                            fontSize = 13.sp,
-                                            color = DevLinkTextPrimary,
-                                            lineHeight = 18.sp
-                                        )
                                     }
                                 }
                             }
