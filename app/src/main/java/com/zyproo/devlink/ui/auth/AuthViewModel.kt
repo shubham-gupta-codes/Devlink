@@ -69,10 +69,13 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onOtpChange(value: String) {
-
-        if (value.length <= 6 && value.all { it.isDigit() }) {
+        if (value.length <= 6 && value.all { it.isDigit() || it == ' ' }) {
             _uiState.update { it.copy(otp = value, verifyError = null) }
         }
+    }
+
+    fun clearOtp() {
+        _uiState.update { it.copy(otp = "", verifyError = null) }
     }
 
     fun login() {
@@ -116,15 +119,16 @@ class AuthViewModel @Inject constructor(
 
     fun verifyOtp() {
         val state = _uiState.value
-        if (state.otp.length != 6) {
-            _uiState.update { it.copy(verifyError = "Enter the 6-digit code from your email.") }
+        val cleanOtp = state.otp.trim().replace(" ", "")
+        if (cleanOtp.length != 6 || !cleanOtp.all { it.isDigit() }) {
+            _uiState.update { it.copy(verifyError = "Please enter the complete 6-digit verification code.") }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isVerifyLoading = true, verifyError = null) }
 
-            when (val result = authRepository.verifyOtp(state.email.trim(), state.otp)) {
+            when (val result = authRepository.verifyOtp(state.email.trim(), cleanOtp)) {
                 is ApiResult.Success -> {
                     _uiState.update { it.copy(isVerifyLoading = false) }
                     val role = Role.fromString(result.data.role)
