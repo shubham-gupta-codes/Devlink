@@ -24,9 +24,9 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zyproo.devlink.common.toFullMediaUrl
 import com.zyproo.devlink.data.remote.dto.ConversationResponse
-
-val DevLinkBlue = Color(0xFF3F51B5)
-val DevLinkBlueLight = Color(0xFF5C6BC0)
+import com.zyproo.devlink.ui.theme.DevLinkBlue
+import com.zyproo.devlink.ui.theme.DevLinkBlueLight
+import com.zyproo.devlink.ui.theme.DevLinkBlueContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +67,7 @@ fun ChatListScreen(
                     placeholder = {
                         Text(
                             text = "Search users or messages...",
-                            color = Color(0xFF94A3B8),
+                            color = Color(0xFF64748B),
                             fontSize = 14.sp
                         )
                     },
@@ -85,7 +85,7 @@ fun ChatListScreen(
                                 Icon(
                                     imageVector = Icons.Default.Clear,
                                     contentDescription = "Clear search",
-                                    tint = Color.Gray,
+                                    tint = Color(0xFF64748B),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -121,24 +121,43 @@ fun ChatListScreen(
                             Icon(
                                 imageVector = Icons.Default.SearchOff,
                                 contentDescription = null,
-                                tint = Color.Gray,
+                                tint = Color(0xFF64748B),
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = "No users or messages match \"$searchQuery\"",
-                                color = Color.Gray,
+                                color = Color(0xFF64748B),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 14.sp
                             )
                         }
                     } else {
-                        Text(
-                            text = "No conversations found. Start chatting!",
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Chat,
+                                contentDescription = null,
+                                tint = DevLinkBlue.copy(alpha = 0.5f),
+                                modifier = Modifier.size(56.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "No conversations yet",
+                                color = Color(0xFF1E293B),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Tap the chat button below to find someone and say hi.",
+                                color = Color(0xFF64748B),
+                                fontSize = 13.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
                     }
                 }
             } else {
@@ -151,7 +170,7 @@ fun ChatListScreen(
                             conversation = conv,
                             onClick = { onConversationClick(conv.id) }
                         )
-                        HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 1.dp)
+                        HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 1.dp, modifier = Modifier.padding(start = 78.dp))
                     }
                 }
             }
@@ -193,7 +212,7 @@ fun ConversationItem(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFE8EAF6)),
+                .background(DevLinkBlueContainer),
             contentAlignment = Alignment.Center
         ) {
             if (!conversation.photoUrl.isNullOrBlank()) {
@@ -237,7 +256,7 @@ fun ConversationItem(
                     Text(
                         text = relativeTime,
                         fontSize = 11.sp,
-                        color = Color.Gray,
+                        color = Color(0xFF64748B),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
@@ -248,7 +267,7 @@ fun ConversationItem(
             Text(
                 text = conversation.lastMessagePreview ?: "No messages yet",
                 fontSize = 13.sp,
-                color = if (conversation.lastMessagePreview == null) Color.LightGray else Color(0xFF64748B),
+                color = Color(0xFF475569),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -256,14 +275,17 @@ fun ConversationItem(
     }
 }
 
+/** Formats a server timestamp in the device's local time: time for today, "Yesterday", otherwise the date. */
 fun formatRelativeTime(timestamp: String): String {
     return try {
-        val parts = timestamp.split("T")
-        if (parts.size == 2) {
-            val timePart = parts[1].substring(0, 5)
-            timePart
-        } else {
-            "recently"
+        val instant = java.time.Instant.parse(timestamp)
+        val zone = java.time.ZoneId.systemDefault()
+        val date = instant.atZone(zone).toLocalDate()
+        val today = java.time.LocalDate.now(zone)
+        when {
+            date.isEqual(today) -> java.time.format.DateTimeFormatter.ofPattern("hh:mm a").withZone(zone).format(instant)
+            date.isEqual(today.minusDays(1)) -> "Yesterday"
+            else -> java.time.format.DateTimeFormatter.ofPattern("dd MMM").withZone(zone).format(instant)
         }
     } catch (e: Exception) {
         "recently"

@@ -1,22 +1,29 @@
 package com.zyproo.devlink.ui.home
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,8 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zyproo.devlink.common.toFullMediaUrl
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.layout.ContentScale
 import com.zyproo.devlink.data.remote.dto.*
 import com.zyproo.devlink.ui.theme.*
 
@@ -33,13 +38,18 @@ import com.zyproo.devlink.ui.theme.*
 @Composable
 fun TeacherCertificateReviewList(
     queue: List<VerificationRequestResponse>,
+    initialSelectedRequestId: Long? = null,
     onEvaluate: (Long, VerificationStatus, String?, Int?, String?) -> Unit,
     onMessageStudent: (String) -> Unit = {},
     onViewStudentProfile: (String) -> Unit = {},
+    onClearSelectedRequest: () -> Unit = {},
     rankings: List<ProfileResponse> = emptyList()
 ) {
+    val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
-    var selectedRequest by remember { mutableStateOf<VerificationRequestResponse?>(null) }
+    var selectedRequest by remember(initialSelectedRequestId) {
+        mutableStateOf(queue.find { it.id == initialSelectedRequestId })
+    }
 
     if (queue.isEmpty()) {
         Box(
@@ -48,47 +58,148 @@ fun TeacherCertificateReviewList(
                 .background(Color(0xFFF6F7FB)),
             contentAlignment = Alignment.Center
         ) {
-            Text("No pending certificates to review.", color = Color.Gray)
+            Text("No pending certificates to review.", color = Color.Gray, fontSize = 14.sp)
         }
     } else {
-        val grouped = queue.groupBy { it.requestedByName }
-        
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFF6F7FB))
-                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            grouped.forEach { (studentName, requests) ->
-                Text(studentName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = DevLinkBlue)
-                requests.forEach { req ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedRequest = req }
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = req.entityName,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = DevLinkTextPrimary
-                            )
-                            req.certificateDetails?.let { details ->
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text("Issuer: ${details.issuingOrg}", fontSize = 12.sp, color = Color.Gray)
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text("Purpose: ${details.purpose}", fontSize = 13.sp, color = Color.DarkGray)
+            items(queue) { req ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { selectedRequest = req },
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, DevLinkBorder),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                val studentProfile = rankings.find { it.username == req.requestedByUsername }
+                                val photoUrl = req.certificateDetails?.studentPhotoUrl?.toFullMediaUrl() ?: studentProfile?.photoUrl?.toFullMediaUrl()
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(DevLinkBlueContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (!photoUrl.isNullOrBlank()) {
+                                        AsyncImage(
+                                            model = photoUrl,
+                                            contentDescription = "Avatar",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Text(
+                                            text = req.requestedByName.take(2).uppercase(),
+                                            fontWeight = FontWeight.Bold,
+                                            color = DevLinkBlue,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = req.requestedByName,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = DevLinkTextPrimary
+                                    )
+                                    Text(
+                                        text = "@${req.requestedByUsername}",
+                                        fontSize = 11.sp,
+                                        color = DevLinkTextSecondary
+                                    )
+                                }
                             }
+
+                            val isPdf = req.certificateDetails?.fileType == FileType.PDF ||
+                                    (req.certificateDetails?.fileUrl?.endsWith(".pdf", ignoreCase = true) == true)
+                            val typeLabel = if (isPdf) "PDF Document" else "Certificate Image"
+                            val badgeBg = if (isPdf) Color(0xFFFEF2F2) else Color(0xFFDCFCE7)
+                            val badgeColor = if (isPdf) Color(0xFFDC2626) else Color(0xFF16A34A)
+                            Surface(
+                                color = badgeBg,
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = typeLabel,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = badgeColor,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        val certTitle = req.certificateDetails?.title?.ifBlank { null } ?: req.entityName
+                        Text(
+                            text = certTitle,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DevLinkTextPrimary
+                        )
+
+                        req.certificateDetails?.let { details ->
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Issuer: ${details.issuingOrg}", fontSize = 12.sp, color = DevLinkTextSecondary)
+                            if (details.purpose.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text("Purpose: ${details.purpose}", fontSize = 12.sp, color = DevLinkTextSecondary)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val dateFormatted = req.createdAt.take(16).replace("T", " ")
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccessTime,
+                                    contentDescription = null,
+                                    tint = DevLinkTextSecondary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = "Uploaded: $dateFormatted",
+                                    fontSize = 11.sp,
+                                    color = DevLinkTextSecondary
+                                )
+                            }
+
+                            Text(
+                                text = "Tap to Review →",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = DevLinkBlue
+                            )
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -101,12 +212,16 @@ fun TeacherCertificateReviewList(
         var scheduleAtStr by remember { mutableStateOf("2026-08-10T10:00:00Z") }
 
         AlertDialog(
-            onDismissRequest = { selectedRequest = null },
+            onDismissRequest = {
+                selectedRequest = null
+                onClearSelectedRequest()
+            },
             confirmButton = {
                 Button(
                     onClick = {
                         onMessageStudent(req.requestedByUsername)
                         selectedRequest = null
+                        onClearSelectedRequest()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = DevLinkBlue),
                     shape = RoundedCornerShape(8.dp),
@@ -127,7 +242,10 @@ fun TeacherCertificateReviewList(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
-                        onClick = { selectedRequest = null },
+                        onClick = {
+                            selectedRequest = null
+                            onClearSelectedRequest()
+                        },
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                     ) {
@@ -149,6 +267,7 @@ fun TeacherCertificateReviewList(
                                 if (status == VerificationStatus.NEED_TO_TALK) scheduleAtStr else null
                             )
                             selectedRequest = null
+                            onClearSelectedRequest()
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (action == "Rejected") Color(0xFFDC2626) else DevLinkBlue
@@ -172,6 +291,7 @@ fun TeacherCertificateReviewList(
                         modifier = Modifier.clickable {
                             onViewStudentProfile(req.requestedByUsername)
                             selectedRequest = null
+                            onClearSelectedRequest()
                         }
                     )
                 }
@@ -179,10 +299,13 @@ fun TeacherCertificateReviewList(
             containerColor = Color.White,
             text = {
                 Column(
-                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 520.dp)
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Student Context Row (Avatar + Name + Timestamp)
+                    // 1. Student Context Row (Avatar + Name + Timestamp)
                     val studentProfile = rankings.find { it.username == req.requestedByUsername }
                     val photoUrl = req.certificateDetails?.studentPhotoUrl?.toFullMediaUrl() ?: studentProfile?.photoUrl?.toFullMediaUrl()
                     val studentName = req.requestedByName
@@ -236,69 +359,227 @@ fun TeacherCertificateReviewList(
                         }
                     }
 
-                    HorizontalDivider(color = DevLinkBorder)
-
-                    // Certificate preview
+                    // 2. Certificate Details Section
                     req.certificateDetails?.let { details ->
-                        Text("Certificate Preview:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = DevLinkTextPrimary)
-                        if (details.fileType == FileType.IMAGE) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF1F5F9)),
-                                contentAlignment = Alignment.Center
+                        Surface(
+                            color = Color(0xFFF8FAFC),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, DevLinkBorder),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                AsyncImage(
-                                    model = details.fileUrl.toFullMediaUrl() ?: details.fileUrl,
-                                    contentDescription = "Certificate Preview",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                Text(
+                                    text = details.title.ifBlank { req.entityName },
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DevLinkTextPrimary
                                 )
-                            }
-                        } else {
-                            Surface(
-                                color = Color(0xFFEFF6FF),
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(1.dp, Color(0xFFBFDBFE)),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        try {
-                                            val fullUrl = details.fileUrl.toFullMediaUrl() ?: details.fileUrl
-                                            uriHandler.openUri(fullUrl)
-                                        } catch (e: Exception) {}
-                                    }
-                            ) {
+
                                 Row(
-                                    modifier = Modifier.padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Surface(
+                                        color = DevLinkBlueContainer,
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            text = "Issuer: ${details.issuingOrg}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = DevLinkBlue,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                }
+
+                                if (details.purpose.isNotBlank()) {
+                                    Text(
+                                        text = details.purpose,
+                                        fontSize = 12.sp,
+                                        color = DevLinkTextSecondary,
+                                        lineHeight = 18.sp
+                                    )
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Description,
+                                        imageVector = Icons.Default.AccessTime,
                                         contentDescription = null,
-                                        tint = DevLinkBlue,
-                                        modifier = Modifier.size(20.dp)
+                                        tint = DevLinkTextSecondary,
+                                        modifier = Modifier.size(13.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Open PDF Document",
-                                        color = DevLinkBlue,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp
+                                        text = "Uploaded on: $dateFormatted",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = DevLinkTextSecondary
                                     )
                                 }
                             }
                         }
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Title: ${details.title}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = DevLinkTextPrimary)
-                        Text("Issuer: ${details.issuingOrg}", fontSize = 13.sp, color = DevLinkTextSecondary)
-                        Text("Purpose: ${details.purpose}", fontSize = 13.sp, color = DevLinkTextSecondary)
-                        HorizontalDivider(color = DevLinkBorder)
+
+                        // 3. Document / Image Preview Section
+                        val rawMediaUrl = details.fileUrl.toFullMediaUrl() ?: details.fileUrl
+                        val cleanTitle = (details.title.ifBlank { req.entityName }).replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                        val viewUrl = if (rawMediaUrl.contains("?")) "$rawMediaUrl&name=$cleanTitle" else "$rawMediaUrl?name=$cleanTitle"
+                        val isImage = details.fileType == FileType.IMAGE ||
+                                details.fileUrl.endsWith(".png", ignoreCase = true) ||
+                                details.fileUrl.endsWith(".jpg", ignoreCase = true) ||
+                                details.fileUrl.endsWith(".jpeg", ignoreCase = true) ||
+                                details.fileUrl.endsWith(".webp", ignoreCase = true)
+
+                        if (isImage) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    text = "Certificate Preview:",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DevLinkTextSecondary
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(210.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFE2E8F0))
+                                        .clickable {
+                                            try { uriHandler.openUri(viewUrl) } catch (e: Exception) {}
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    AsyncImage(
+                                        model = viewUrl,
+                                        contentDescription = "Certificate Preview",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Fit
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    Text(
+                                        text = "Tap image to view in full resolution ↗",
+                                        fontSize = 11.sp,
+                                        color = DevLinkBlue,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.clickable {
+                                            try { uriHandler.openUri(viewUrl) } catch (e: Exception) {}
+                                        }
+                                    )
+                                }
+                            }
+                        } else {
+                            // PDF Document Card
+                            Surface(
+                                color = Color(0xFFFEF2F2),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, Color(0xFFFECACA)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Surface(
+                                            color = Color(0xFFDC2626),
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = Modifier.size(44.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Description,
+                                                    contentDescription = "PDF Document",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                        }
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "${cleanTitle}.pdf",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp,
+                                                color = DevLinkTextPrimary,
+                                                maxLines = 1
+                                            )
+                                            Text(
+                                                text = "PDF Certificate Document",
+                                                fontSize = 11.sp,
+                                                color = Color(0xFF991B1B)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        // Button 1: Open with PDF Viewer Intent
+                                        Button(
+                                            onClick = {
+                                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                    setDataAndType(Uri.parse(viewUrl), "application/pdf")
+                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                }
+                                                try {
+                                                    context.startActivity(Intent.createChooser(intent, "Open Certificate PDF with..."))
+                                                } catch (e: Exception) {
+                                                    try { uriHandler.openUri(viewUrl) } catch (e2: Exception) {}
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Open PDF", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        // Button 2: Browser Link with human-readable name
+                                        OutlinedButton(
+                                            onClick = {
+                                                try { uriHandler.openUri(viewUrl) } catch (e: Exception) {}
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Link,
+                                                contentDescription = null,
+                                                tint = DevLinkTextPrimary,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Browser Link", fontSize = 12.sp, color = DevLinkTextPrimary, fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+
+                    HorizontalDivider(color = DevLinkBorder)
+
+                    // 4. Evaluation Decision Form
+                    Text("Evaluation Decision", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = DevLinkTextPrimary)
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -339,9 +620,9 @@ fun TeacherCertificateReviewList(
                             value = pointsStr,
                             onValueChange = { newVal ->
                                 if (newVal.all { it.isDigit() } && newVal.length <= 4) {
-                                pointsStr = newVal
-                                pointsVal = newVal.toIntOrNull() ?: 0
-                            }
+                                    pointsStr = newVal
+                                    pointsVal = newVal.toIntOrNull() ?: 0
+                                }
                             },
                             label = { Text("Award Points") },
                             placeholder = { Text("Enter points (e.g. 50)") },

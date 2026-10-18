@@ -28,6 +28,8 @@ class SessionManager @Inject constructor(
     val roleFlow: Flow<String?> = dataStore.data.map { it[Keys.ROLE] }
     val serverHostFlow: Flow<String?> = dataStore.data.map { it[Keys.SERVER_HOST] }
     val isLoggedInFlow: Flow<Boolean> = dataStore.data.map { !it[Keys.ACCESS_TOKEN].isNullOrBlank() }
+    val userIdFlow: Flow<Long?> = dataStore.data.map { it[Keys.USER_ID]?.toLongOrNull() }
+    val usernameFlow: Flow<String?> = dataStore.data.map { it[Keys.USERNAME] }
 
 
     suspend fun saveSession(auth: AuthResponse) {

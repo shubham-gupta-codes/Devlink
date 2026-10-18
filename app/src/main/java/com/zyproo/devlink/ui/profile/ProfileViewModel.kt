@@ -144,4 +144,22 @@ class ProfileViewModel @Inject constructor(
     fun resetSaveSuccess() {
         _uiState.update { it.copy(saveSuccess = false, saveError = null) }
     }
+
+    fun fetchProfileByUsername(username: String, onResult: (ProfileResponse?) -> Unit) {
+        viewModelScope.launch {
+            when (val result = repository.getProfileByUsername(username)) {
+                is ApiResult.Success -> onResult(result.data)
+                else -> onResult(null)
+            }
+        }
+    }
+
+    fun fetchProfileById(userId: Long, onResult: (ProfileResponse?) -> Unit) {
+        viewModelScope.launch {
+            when (val result = repository.getProfileById(userId)) {
+                is ApiResult.Success -> onResult(result.data)
+                else -> onResult(null)
+            }
+        }
+    }
 }

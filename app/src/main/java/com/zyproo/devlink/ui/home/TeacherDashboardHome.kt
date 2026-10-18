@@ -38,7 +38,8 @@ fun TeacherDashboardHome(
     onNavigateToStudents: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
     onNavigateToMessages: () -> Unit,
-    onReviewProject: ((VerificationRequestResponse) -> Unit)? = null
+    onReviewProject: ((VerificationRequestResponse) -> Unit)? = null,
+    onReviewCertificate: ((VerificationRequestResponse) -> Unit)? = null
 ) {
     val totalPending = skillsCount + projectsCount + certificatesCount
 
@@ -437,6 +438,94 @@ fun TeacherDashboardHome(
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = DevLinkBlue,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Recent Certificates activity
+            items(certificatesQueue.take(3)) { item ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onReviewCertificate?.invoke(item) ?: onNavigateToVerificationCenter("CERTIFICATE")
+                        },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    border = BorderStroke(1.dp, DevLinkBorder)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(40.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFFD1FAE5)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Description,
+                                    contentDescription = "Certificate",
+                                    tint = Color(0xFF059669),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            val certTitle = item.certificateDetails?.title?.ifBlank { null } ?: item.entityName
+                            Text(
+                                text = "Certificate: $certTitle",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = DevLinkTextPrimary
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "By ${item.requestedByName}",
+                                    fontSize = 11.sp,
+                                    color = DevLinkTextSecondary
+                                )
+                                val dateFormatted = item.createdAt.take(16).replace("T", " ")
+                                Text(
+                                    text = "•",
+                                    fontSize = 11.sp,
+                                    color = DevLinkTextSecondary
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccessTime,
+                                        contentDescription = null,
+                                        tint = DevLinkTextSecondary,
+                                        modifier = Modifier.size(11.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = dateFormatted,
+                                        fontSize = 10.sp,
+                                        color = DevLinkTextSecondary
+                                    )
+                                }
+                            }
+                        }
+                        Surface(
+                            color = Color(0xFFD1FAE5),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = "CERTIFICATE",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF047857),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }

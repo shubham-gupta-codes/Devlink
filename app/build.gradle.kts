@@ -24,11 +24,11 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            buildConfigField("String", "API_BASE_URL", "\"https://api.devlink.example.com/api\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://devlink-api-o6dg.onrender.com/\"")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://192.168.0.101:8080\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://devlink-api-o6dg.onrender.com/\"")
         }
     }
     compileOptions {

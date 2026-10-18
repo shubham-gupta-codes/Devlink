@@ -36,25 +36,6 @@ import com.zyproo.devlink.data.remote.dto.*
 import com.zyproo.devlink.ui.file.FileViewModel
 import com.zyproo.devlink.ui.theme.*
 
-private fun getPlatformMeta(platform: SocialPlatform): Pair<String, String> {
-    return when (platform) {
-        SocialPlatform.GITHUB -> "🐙" to "GitHub"
-        SocialPlatform.LINKEDIN -> "💼" to "LinkedIn"
-        SocialPlatform.LEETCODE -> "🧩" to "LeetCode"
-        SocialPlatform.INSTAGRAM -> "📷" to "Instagram"
-        SocialPlatform.TWITTER -> "🐦" to "Twitter / X"
-        SocialPlatform.YOUTUBE -> "📹" to "YouTube"
-        SocialPlatform.PORTFOLIO -> "🌐" to "Portfolio"
-        SocialPlatform.CODEFORCES -> "🏆" to "Codeforces"
-        SocialPlatform.HACKERRANK -> "💻" to "HackerRank"
-        SocialPlatform.KAGGLE -> "📊" to "Kaggle"
-        SocialPlatform.MEDIUM -> "📝" to "Medium"
-        SocialPlatform.DEVTO -> "👩‍💻" to "Dev.to"
-        SocialPlatform.BEHANCE -> "🎨" to "Behance"
-        SocialPlatform.DRIBBBLE -> "🏀" to "Dribbble"
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
@@ -529,7 +510,7 @@ fun EditProfileScreen(
                                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                                             modifier = Modifier.weight(1f)
                                         ) {
-                                            Text(icon, fontSize = 18.sp)
+                                            SocialPlatformIcon(link.platform, modifier = Modifier.size(24.dp))
                                             Column {
                                                 Text(
                                                     text = name,
@@ -624,11 +605,11 @@ fun EditProfileScreen(
                                         border = BorderStroke(1.dp, if (isSelected) DevLinkBlue else Color(0xFFCBD5E1))
                                     ) {
                                         Row(
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
-                                            Text(icon, fontSize = 13.sp)
+                                            SocialPlatformIcon(platform, modifier = Modifier.size(18.dp))
                                             Text(
                                                 text = name,
                                                 fontSize = 11.sp,

@@ -52,7 +52,7 @@ class WebSocketManager @Inject constructor(
             BuildConfig.API_BASE_URL
         }
 
-        val wsBase = rawBase
+        val wsBase = rawBase.trim().trimEnd('/')
             .replace("http://", "ws://")
             .replace("https://", "wss://")
         

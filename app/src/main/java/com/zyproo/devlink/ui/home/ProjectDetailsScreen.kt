@@ -42,7 +42,8 @@ fun ProjectDetailsScreen(
     onLike: () -> Unit,
     onSave: () -> Unit = {},
     onAddComment: (String, Long?) -> Unit,
-    onLoadComments: () -> Unit
+    onLoadComments: () -> Unit,
+    onAuthorClick: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
@@ -60,7 +61,12 @@ fun ProjectDetailsScreen(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (onAuthorClick != null) Modifier.clickable { onAuthorClick(project.studentUsername) }
+                                else Modifier
+                            )
                     ) {
                         val authorPhoto = project.studentPhotoUrl.toFullMediaUrl()
                         Box(
@@ -521,7 +527,8 @@ fun ProjectDetailsScreen(
                 items(comments) { c ->
                     CommentCard(
                         comment = c,
-                        onReplyClick = { replyingToComment = c }
+                        onReplyClick = { replyingToComment = c },
+                        onAuthorClick = onAuthorClick
                     )
                 }
             }
@@ -532,7 +539,8 @@ fun ProjectDetailsScreen(
 @Composable
 fun CommentCard(
     comment: ProjectCommentResponse,
-    onReplyClick: () -> Unit
+    onReplyClick: () -> Unit,
+    onAuthorClick: ((String) -> Unit)? = null
 ) {
     val commentTimeAgo = formatRelativeTime(comment.createdAt)
     Card(
@@ -548,7 +556,13 @@ fun CommentCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.then(
+                        if (onAuthorClick != null) Modifier.clickable { onAuthorClick(comment.username) }
+                        else Modifier
+                    )
+                ) {
                     val commenterPhoto = comment.photoUrl.toFullMediaUrl()
                     Box(
                         modifier = Modifier

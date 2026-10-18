@@ -450,6 +450,13 @@ fun StudentProfileScreen(
                 }
             }
 
+            // Social & Professional Profiles
+            SocialLinksSection(
+                socialLinks = profile.socialLinks ?: emptyList(),
+                isOwnProfile = isOwnProfile,
+                onAddClick = { onEditClick() }
+            )
+
             // Verified Skills Card
             Card(
                 modifier = Modifier

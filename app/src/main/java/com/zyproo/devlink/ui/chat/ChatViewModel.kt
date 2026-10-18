@@ -2,6 +2,7 @@ package com.zyproo.devlink.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zyproo.devlink.data.local.SessionManager
 import com.zyproo.devlink.data.remote.WebSocketManager
 import com.zyproo.devlink.data.remote.dto.ConversationResponse
 import com.zyproo.devlink.data.remote.dto.MessageResponse
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
-    private val webSocketManager: WebSocketManager
+    private val webSocketManager: WebSocketManager,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _conversations = MutableStateFlow<List<ConversationResponse>>(emptyList())
@@ -37,16 +39,30 @@ class ChatViewModel @Inject constructor(
     private val _threadError = MutableStateFlow<String?>(null)
     val threadError: StateFlow<String?> = _threadError.asStateFlow()
 
+    /** Id of the logged-in user, read from the session so it works for every role. */
+    private val _currentUserId = MutableStateFlow(0L)
+    val currentUserId: StateFlow<Long> = _currentUserId.asStateFlow()
+
     var activeConversationId: Long? = null
 
     init {
         viewModelScope.launch {
+            sessionManager.userIdFlow.collect { id -> _currentUserId.value = id ?: 0L }
+        }
+        viewModelScope.launch {
             webSocketManager.incomingMessages.collect { msg ->
                 if (msg.conversationId == activeConversationId) {
-                    _activeMessages.value = _activeMessages.value + msg
+                    appendIfNew(msg)
                 }
                 loadInbox()
             }
+        }
+    }
+
+    /** Adds a message only if one with the same id is not already shown (REST reply and socket push can both arrive). */
+    private fun appendIfNew(msg: MessageResponse) {
+        if (_activeMessages.value.none { it.id == msg.id }) {
+            _activeMessages.value = _activeMessages.value + msg
         }
     }
 
@@ -76,6 +92,10 @@ class ChatViewModel @Inject constructor(
         _activeMessages.value = emptyList()
     }
 
+    fun clearThreadError() {
+        _threadError.value = null
+    }
+
     fun loadMessages(conversationId: Long) {
         viewModelScope.launch {
             _isLoadingThread.value = true
@@ -92,29 +112,36 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Sends through REST only. The server saves the message once and pushes it to every participant's live
+     * socket, so there is a single saved copy and the other person receives it in real time.
+     */
     fun sendMessage(content: String) {
         val convId = activeConversationId ?: return
-        if (content.isBlank()) return
+        val text = content.trim()
+        if (text.isEmpty()) return
         viewModelScope.launch {
-            webSocketManager.sendMessage(convId, content)
-            chatRepository.sendMessage(convId, content)
+            chatRepository.sendMessage(convId, text)
                 .onSuccess { sentMsg ->
-                    if (!_activeMessages.value.any { it.id == sentMsg.id }) {
-                        _activeMessages.value = _activeMessages.value + sentMsg
-                    }
+                    if (activeConversationId == convId) appendIfNew(sentMsg)
                     loadInbox()
                 }
                 .onFailure {
-                    _threadError.value = it.message ?: "Failed to send message"
+                    _threadError.value = it.message ?: "Message could not be sent. Check your connection and try again."
                 }
         }
     }
 
+    /**
+     * Opens (or creates) the direct chat and marks it as the active conversation inside the ViewModel,
+     * so messages typed afterwards are sent to the right conversation.
+     */
     fun startDirectChat(targetUsername: String, onComplete: (Long) -> Unit) {
         viewModelScope.launch {
             chatRepository.startDirectChat(targetUsername)
                 .onSuccess {
                     loadInbox()
+                    openConversation(it.id)
                     onComplete(it.id)
                 }
                 .onFailure {

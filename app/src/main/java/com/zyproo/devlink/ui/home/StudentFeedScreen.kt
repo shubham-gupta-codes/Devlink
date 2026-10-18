@@ -47,7 +47,8 @@ fun StudentFeedScreen(
     onCommentProject: (Long, String, Long?) -> Unit,
     onLoadComments: (Long) -> Unit,
     onLoadFeed: (String) -> Unit,
-    onProjectClick: (ProjectResponse) -> Unit
+    onProjectClick: (ProjectResponse) -> Unit,
+    onAuthorClick: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     var selectedFilter by remember { mutableStateOf("trending") }
@@ -143,32 +144,41 @@ fun StudentFeedScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val authorPhotoUrl = proj.studentPhotoUrl.toFullMediaUrl()
-                                Box(
+                                Row(
                                     modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(DevLinkBlueContainer),
-                                    contentAlignment = Alignment.Center
+                                        .weight(1f)
+                                        .then(
+                                            if (onAuthorClick != null) Modifier.clickable { onAuthorClick(proj.studentUsername) }
+                                            else Modifier
+                                        ),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    if (!authorPhotoUrl.isNullOrBlank()) {
-                                        AsyncImage(
-                                            model = authorPhotoUrl,
-                                            contentDescription = "Avatar",
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
-                                    } else {
-                                        Text(
-                                            text = proj.studentName.take(2).uppercase(),
-                                            fontWeight = FontWeight.Bold,
-                                            color = DevLinkBlue,
-                                            fontSize = 14.sp
-                                        )
+                                    val authorPhotoUrl = proj.studentPhotoUrl.toFullMediaUrl()
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(DevLinkBlueContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (!authorPhotoUrl.isNullOrBlank()) {
+                                            AsyncImage(
+                                                model = authorPhotoUrl,
+                                                contentDescription = "Avatar",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            Text(
+                                                text = proj.studentName.take(2).uppercase(),
+                                                fontWeight = FontWeight.Bold,
+                                                color = DevLinkBlue,
+                                                fontSize = 14.sp
+                                            )
+                                        }
                                     }
-                                }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column(modifier = Modifier.weight(1f)) {
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = proj.studentName,
                                         fontWeight = FontWeight.Bold,
@@ -189,6 +199,7 @@ fun StudentFeedScreen(
                                             )
                                         }
                                     }
+                                }
                                 }
                                 Surface(
                                     color = DevLinkBlueContainer,

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zyproo.devlink.data.remote.dto.TeamResponse
+import com.zyproo.devlink.ui.theme.DevLinkBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -87,6 +87,8 @@ fun DashboardScreen(
     val chatViewModel: ChatViewModel = hiltViewModel()
     val chatState by chatViewModel.conversations.collectAsState()
     val activeMessages by chatViewModel.activeMessages.collectAsState()
+    val chatCurrentUserId by chatViewModel.currentUserId.collectAsState()
+    val chatThreadError by chatViewModel.threadError.collectAsState()
 
     val teamViewModel: TeamViewModel = hiltViewModel()
     val myTeams by teamViewModel.myTeams.collectAsState()
@@ -201,6 +203,64 @@ fun DashboardScreen(
     }
 
     val currentProfile = profileState.profile
+    val currentUsername = currentProfile?.username.orEmpty()
+    val currentEffectiveUserId = if (chatCurrentUserId != 0L) chatCurrentUserId else (currentProfile?.userId ?: 0L)
+
+    val navigateToSelfProfile: () -> Unit = {
+        selectedStudentProfileForDetails = null
+        selectedProjectForDetails = null
+        selectedCertificateForDetails = null
+        activeChatConversationId = null
+        when (role) {
+            Role.STUDENT -> {
+                homeSubScreen = "feed"
+                activeTab = 4
+            }
+            Role.TEACHER -> {
+                isEditingProfile = true
+            }
+            Role.RECRUITER -> {
+                activeTab = 4
+            }
+            Role.ADMIN -> {
+                activeTab = 4
+            }
+        }
+    }
+
+    val handleUserClick: (ProfileResponse) -> Unit = { clickedStudent ->
+        val isSelf = (clickedStudent.userId != 0L && clickedStudent.userId == currentEffectiveUserId) ||
+                     (currentUsername.isNotBlank() && clickedStudent.username.equals(currentUsername, ignoreCase = true))
+        if (isSelf) {
+            navigateToSelfProfile()
+        } else {
+            selectedProjectForDetails = null
+            selectedCertificateForDetails = null
+            selectedStudentProfileForDetails = clickedStudent
+        }
+    }
+
+    val handleUsernameClick: (String) -> Unit = { username ->
+        if (currentUsername.isNotBlank() && username.equals(currentUsername, ignoreCase = true)) {
+            navigateToSelfProfile()
+        } else {
+            val student = profileState.rankings.find { it.username.equals(username, ignoreCase = true) }
+                ?: profileState.searchResults.find { it.username.equals(username, ignoreCase = true) }
+            if (student != null) {
+                selectedProjectForDetails = null
+                selectedCertificateForDetails = null
+                selectedStudentProfileForDetails = student
+            } else {
+                profileViewModel.fetchProfileByUsername(username) { fetched ->
+                    if (fetched != null) {
+                        selectedProjectForDetails = null
+                        selectedCertificateForDetails = null
+                        selectedStudentProfileForDetails = fetched
+                    }
+                }
+            }
+        }
+    }
 
     if (isEditingProfile && currentProfile != null) {
         EditProfileScreen(
@@ -288,8 +348,9 @@ fun DashboardScreen(
                                 when (activeTab) {
                                     0 -> "Search Talent"
                                     1 -> "Jobs"
-                                    2 -> "Messages"
-                                    3 -> "Profile"
+                                    2 -> "Notifications"
+                                    3 -> "Messages"
+                                    4 -> "Profile"
                                     else -> "DevLink"
                                 }
                             }
@@ -579,7 +640,7 @@ fun DashboardScreen(
 
 
             if (isChatActive) {
-                val currentUserId = profileState.profile?.userId ?: 0L
+                val currentUserId = if (chatCurrentUserId != 0L) chatCurrentUserId else (profileState.profile?.userId ?: 0L)
                 when {
                     showTeamInviteScreen != null -> {
                         TeamInviteScreen(
@@ -683,7 +744,8 @@ fun DashboardScreen(
                         onLoadComments = { id -> projectViewModel.loadComments(id) },
                         onDeleteProject = { id -> projectViewModel.deleteProject(id) },
                         onLoadFeed = { filter -> projectViewModel.loadFeed(filter) },
-                        onUserClick = { clickedStudent -> selectedStudentProfileForDetails = clickedStudent },
+                        onUserClick = handleUserClick,
+                        onAuthorClick = handleUsernameClick,
                         onEditProfile = { isEditingProfile = true },
                         selectedProjectForDetails = selectedProjectForDetails,
                         selectedCertificateForDetails = selectedCertificateForDetails,
@@ -730,7 +792,7 @@ fun DashboardScreen(
                             }
                         },
                         onSearch = { q, c, b, y, s, sk, bg -> profileViewModel.searchStudents(q, c, b, y, s, sk, bg) },
-                        onUserClick = { clickedStudent -> selectedStudentProfileForDetails = clickedStudent },
+                        onUserClick = handleUserClick,
                         onLoadRankings = { course, branch, year -> profileViewModel.loadStudentRankings(course, branch, year) },
                         onScheduleMeeting = { id, date, notes -> skillViewModel.scheduleMeeting(id, date, notes) },
                         onApprove = { id, level, points -> skillViewModel.approveRequest(id, level, points) },
@@ -740,13 +802,7 @@ fun DashboardScreen(
                         },
                         onEditProfile = { isEditingProfile = true },
                         onLogoutClick = onLogoutClick,
-                        onViewStudentProfile = { username ->
-                            val student = profileState.rankings.find { it.username == username }
-                                       ?: profileState.searchResults.find { it.username == username }
-                            if (student != null) {
-                                selectedStudentProfileForDetails = student
-                            }
-                        }
+                        onViewStudentProfile = handleUsernameClick
                     )
                     Role.RECRUITER -> {
                         if (activeTab == 2) {
@@ -762,7 +818,7 @@ fun DashboardScreen(
                                 isSearching = profileState.isSearching,
                                 searchError = profileState.searchError,
                                 onSearch = { q, c, b, y, s, sk, bg -> profileViewModel.searchStudents(q, c, b, y, s, sk, bg) },
-                                onUserClick = { clickedStudent -> selectedStudentProfileForDetails = clickedStudent },
+                                onUserClick = handleUserClick,
                                 onEditProfile = { isEditingProfile = true },
                                 jobViewModel = jobViewModel,
                                 onStartDirectChat = { username ->
@@ -790,7 +846,7 @@ fun DashboardScreen(
 
     activeChatConversationId?.let { convId ->
         val activeConv = chatState.find { it.id == convId }
-        val currentUserId = profileState.profile?.userId ?: 0L
+        val currentUserId = if (chatCurrentUserId != 0L) chatCurrentUserId else (profileState.profile?.userId ?: 0L)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -809,6 +865,8 @@ fun DashboardScreen(
                 onSendMessage = { content ->
                     chatViewModel.sendMessage(content)
                 },
+                errorMessage = chatThreadError,
+                onErrorShown = { chatViewModel.clearThreadError() },
                 onTeamSettingsClick = { teamId ->
                     activeTeamSettingsId = teamId
                 }
@@ -1203,6 +1261,7 @@ fun StudentFlow(
     onDeleteProject: (Long) -> Unit,
     onLoadFeed: (String) -> Unit,
     onUserClick: (ProfileResponse) -> Unit,
+    onAuthorClick: ((String) -> Unit)? = null,
     onEditProfile: () -> Unit,
     selectedProjectForDetails: ProjectResponse?,
     selectedCertificateForDetails: CertificateResponse?,
@@ -1240,7 +1299,8 @@ fun StudentFlow(
                         onCommentProject = onCommentProject,
                         onLoadComments = onLoadComments,
                         onLoadFeed = onLoadFeed,
-                        onProjectClick = { onProjectClick(it) }
+                        onProjectClick = { onProjectClick(it) },
+                        onAuthorClick = onAuthorClick
                     )
                 }
             }
@@ -1304,7 +1364,8 @@ fun StudentFlow(
                 onLike = { onLikeProject(proj.id) },
                 onSave = { onSaveProject(proj.id) },
                 onAddComment = { text, parentId -> onCommentProject(proj.id, text, parentId) },
-                onLoadComments = { onLoadComments(proj.id) }
+                onLoadComments = { onLoadComments(proj.id) },
+                onAuthorClick = onAuthorClick
             )
         }
     }
@@ -1352,12 +1413,14 @@ fun TeacherFlow(
 ) {
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var targetProjectIdForReview by remember { mutableStateOf<Long?>(null) }
+    var targetCertificateIdForReview by remember { mutableStateOf<Long?>(null) }
     var lastTab by remember { mutableStateOf(activeTab) }
 
     LaunchedEffect(activeTab) {
         if (activeTab != 1) {
             selectedCategory = null
             targetProjectIdForReview = null
+            targetCertificateIdForReview = null
         }
         lastTab = activeTab
     }
@@ -1383,6 +1446,11 @@ fun TeacherFlow(
                 onReviewProject = { projectReq ->
                     selectedCategory = "PROJECT"
                     targetProjectIdForReview = projectReq.id
+                    onTabSelect(1)
+                },
+                onReviewCertificate = { certReq ->
+                    selectedCategory = "CERTIFICATE"
+                    targetCertificateIdForReview = certReq.id
                     onTabSelect(1)
                 }
             )
@@ -1414,6 +1482,7 @@ fun TeacherFlow(
                         IconButton(onClick = {
                             selectedCategory = null
                             targetProjectIdForReview = null
+                            targetCertificateIdForReview = null
                         }) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
@@ -1467,12 +1536,14 @@ fun TeacherFlow(
                             )
                             "CERTIFICATE" -> TeacherCertificateReviewList(
                                 queue = certificatesQueue,
+                                initialSelectedRequestId = targetCertificateIdForReview,
                                 onEvaluate = onEvaluateRequest,
                                 onMessageStudent = { username ->
                                     onStartDirectChat(username)
                                     onTabSelect(4)
                                 },
                                 onViewStudentProfile = onViewStudentProfile,
+                                onClearSelectedRequest = { targetCertificateIdForReview = null },
                                 rankings = rankings
                             )
                         }
@@ -1755,24 +1826,35 @@ fun TeacherEvaluationQueueScreen(
                             .fillMaxWidth()
                             .clickable { selectedRequest = req },
                         colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, DevLinkBorder),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "@${req.studentUsername}",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                )
+                                Column {
+                                    Text(
+                                        text = req.studentName.ifBlank { req.studentUsername },
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = DevLinkTextPrimary
+                                    )
+                                    Text(
+                                        text = "@${req.studentUsername}",
+                                        fontSize = 11.sp,
+                                        color = DevLinkTextSecondary
+                                    )
+                                }
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .clip(RoundedCornerShape(8.dp))
                                         .background(
                                             if (req.status == SkillStatus.MEET) Color(0xFFFFF3CD)
-                                            else Color(0xFFF1F5FE)
+                                            else DevLinkBlueContainer
                                         )
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
@@ -1784,11 +1866,12 @@ fun TeacherEvaluationQueueScreen(
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "wants to verify: \"${req.skillName}\"",
-                                fontSize = 13.sp,
-                                color = Color.DarkGray
+                                text = "Skill Claim: \"${req.skillName}\"",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DevLinkTextPrimary
                             )
                             if (req.status == SkillStatus.MEET && !req.meetingNotes.isNullOrBlank()) {
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -1796,6 +1879,36 @@ fun TeacherEvaluationQueueScreen(
                                     text = "Scheduled: ${req.meetingDate?.take(10) ?: ""} - ${req.meetingNotes}",
                                     fontSize = 12.sp,
                                     color = Color.Gray
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val dateFormatted = req.createdAt.take(16).replace("T", " ")
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccessTime,
+                                        contentDescription = null,
+                                        tint = DevLinkTextSecondary,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Text(
+                                        text = "Submitted: $dateFormatted",
+                                        fontSize = 11.sp,
+                                        color = DevLinkTextSecondary
+                                    )
+                                }
+                                Text(
+                                    text = "Tap to Evaluate →",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = DevLinkBlue
                                 )
                             }
                         }
