@@ -277,40 +277,14 @@ fun EditProfileScreen(
                                 .background(DevLinkBlue),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (localSelectedUri != null) {
-                                AsyncImage(
-                                    model = localSelectedUri,
-                                    contentDescription = "Profile Photo",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else if (!fullAvatarUrl.isNullOrBlank()) {
-                                AsyncImage(
-                                    model = fullAvatarUrl,
-                                    contentDescription = "Profile Photo",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                val initials = if (isRecruiter) {
-                                    companyName.split(" ").filter { it.isNotEmpty() }
-                                        .take(2).map { it.first().uppercase() }.joinToString("")
-                                        .takeIf { it.isNotEmpty() } ?: "CO"
-                                } else {
-                                    if (!profile.name.isNullOrBlank()) {
-                                        profile.name.split(" ").filter { it.isNotEmpty() }
-                                            .take(2).map { it.first().uppercase() }.joinToString("")
-                                    } else {
-                                        profile.username.take(2).uppercase()
-                                    }
-                                }
-                                Text(
-                                    text = initials,
-                                    color = Color.White,
-                                    fontSize = 32.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            val currentAvatarModel = localSelectedUri ?: fullAvatarUrl
+                            val avatarName = if (isRecruiter) companyName else (profile.name ?: profile.username)
+                            com.zyproo.devlink.ui.common.UserAvatar(
+                                model = currentAvatarModel,
+                                name = avatarName,
+                                modifier = Modifier.fillMaxSize(),
+                                fontSize = 32.sp
+                            )
 
                             if (fileState.isUploading) {
                                 Box(

@@ -30,8 +30,15 @@ class FileRepositoryImpl @Inject constructor(
             inputStream.close()
 
             val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+            val ext = when {
+                mimeType.contains("png", ignoreCase = true) -> "png"
+                mimeType.contains("webp", ignoreCase = true) -> "webp"
+                mimeType.contains("pdf", ignoreCase = true) -> "pdf"
+                mimeType.contains("gif", ignoreCase = true) -> "gif"
+                else -> "jpg"
+            }
             val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
-            val part = MultipartBody.Part.createFormData("file", "upload_${System.currentTimeMillis()}", requestBody)
+            val part = MultipartBody.Part.createFormData("file", "upload_${System.currentTimeMillis()}.$ext", requestBody)
 
             val response = fileApi.uploadFile(part)
             val body = response.body()

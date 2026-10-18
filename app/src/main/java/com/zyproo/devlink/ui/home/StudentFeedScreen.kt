@@ -154,29 +154,14 @@ fun StudentFeedScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     val authorPhotoUrl = proj.studentPhotoUrl.toFullMediaUrl()
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .clip(CircleShape)
-                                            .background(DevLinkBlueContainer),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (!authorPhotoUrl.isNullOrBlank()) {
-                                            AsyncImage(
-                                                model = authorPhotoUrl,
-                                                contentDescription = "Avatar",
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        } else {
-                                            Text(
-                                                text = proj.studentName.take(2).uppercase(),
-                                                fontWeight = FontWeight.Bold,
-                                                color = DevLinkBlue,
-                                                fontSize = 14.sp
-                                            )
-                                        }
-                                    }
+                                    com.zyproo.devlink.ui.common.UserAvatar(
+                                        model = authorPhotoUrl,
+                                        name = proj.studentName,
+                                        modifier = Modifier.size(40.dp),
+                                        backgroundColor = DevLinkBlueContainer,
+                                        textColor = DevLinkBlue,
+                                        fontSize = 14.sp
+                                    )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                     Text(

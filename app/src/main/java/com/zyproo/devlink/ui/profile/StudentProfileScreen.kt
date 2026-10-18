@@ -228,34 +228,12 @@ fun StudentProfileScreen(
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                                 modifier = Modifier.size(76.dp)
                             ) {
-                                if (!photoUrl.isNullOrBlank()) {
-                                    AsyncImage(
-                                        model = photoUrl,
-                                        contentDescription = "Profile Picture",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(DevLinkBlue),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        val initials = if (!profile.name.isNullOrBlank()) {
-                                            profile.name.split(" ").filter { it.isNotEmpty() }
-                                                .take(2).map { it.first().uppercase() }.joinToString("")
-                                        } else {
-                                            profile.username.take(2).uppercase()
-                                        }
-                                        Text(
-                                            text = initials,
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 24.sp
-                                        )
-                                    }
-                                }
+                                com.zyproo.devlink.ui.common.UserAvatar(
+                                    model = profile.photoUrl,
+                                    name = profile.name ?: profile.username,
+                                    modifier = Modifier.fillMaxSize(),
+                                    fontSize = 24.sp
+                                )
                             }
 
                             if (profile.rank != null && profile.rank > 0) {
