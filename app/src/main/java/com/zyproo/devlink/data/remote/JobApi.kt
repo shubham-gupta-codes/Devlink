@@ -50,6 +50,22 @@ interface JobApi {
     @GET("api/jobs/shortlisted")
     suspend fun getSavedCandidates(): List<SavedCandidateResponse>
 
+    @DELETE("api/jobs/shortlist")
+    suspend fun removeShortlistedCandidate(
+        @Query("studentId") studentId: Long,
+        @Query("jobId") jobId: Long?
+    ): retrofit2.Response<Unit>
+
+    @DELETE("api/jobs/shortlist/{id}")
+    suspend fun removeShortlistedCandidateById(
+        @Path("id") id: Long
+    ): retrofit2.Response<Unit>
+
+    @DELETE("api/jobs/shortlist/student/{studentId}")
+    suspend fun removeCandidateFromAllShortlists(
+        @Path("studentId") studentId: Long
+    ): retrofit2.Response<Unit>
+
     @GET("api/jobs/{id}/recommended")
     suspend fun getRecommendedCandidates(@Path("id") jobId: Long): List<ProfileResponse>
 }

@@ -252,6 +252,65 @@ class JobViewModel @Inject constructor(
         }
     }
 
+    fun removeShortlistedCandidate(studentId: Long, jobId: Long?, onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            state = state.copy(isLoading = true, error = null)
+            when (val result = jobRepository.removeShortlistedCandidate(studentId, jobId)) {
+                is ApiResult.Success -> {
+                    state = state.copy(
+                        isLoading = false,
+                        savedCandidates = state.savedCandidates.filterNot {
+                            it.studentProfile.userId == studentId && it.jobId == jobId
+                        }
+                    )
+                    loadSavedCandidates()
+                    onComplete()
+                }
+                is ApiResult.Error -> {
+                    state = state.copy(isLoading = false, error = result.message)
+                }
+            }
+        }
+    }
+
+    fun removeShortlistedCandidateById(id: Long, onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            state = state.copy(isLoading = true, error = null)
+            when (val result = jobRepository.removeShortlistedCandidateById(id)) {
+                is ApiResult.Success -> {
+                    state = state.copy(
+                        isLoading = false,
+                        savedCandidates = state.savedCandidates.filterNot { it.id == id }
+                    )
+                    loadSavedCandidates()
+                    onComplete()
+                }
+                is ApiResult.Error -> {
+                    state = state.copy(isLoading = false, error = result.message)
+                }
+            }
+        }
+    }
+
+    fun removeCandidateFromAllShortlists(studentId: Long, onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            state = state.copy(isLoading = true, error = null)
+            when (val result = jobRepository.removeCandidateFromAllShortlists(studentId)) {
+                is ApiResult.Success -> {
+                    state = state.copy(
+                        isLoading = false,
+                        savedCandidates = state.savedCandidates.filterNot { it.studentProfile.userId == studentId }
+                    )
+                    loadSavedCandidates()
+                    onComplete()
+                }
+                is ApiResult.Error -> {
+                    state = state.copy(isLoading = false, error = result.message)
+                }
+            }
+        }
+    }
+
     fun loadSavedCandidates() {
         viewModelScope.launch {
             state = state.copy(isLoading = true, error = null)

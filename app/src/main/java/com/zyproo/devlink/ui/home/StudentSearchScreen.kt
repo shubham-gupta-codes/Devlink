@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,6 +43,7 @@ fun StudentSearchScreen(
     onSearch: (String?, Course?, Branch?, Int?, Int?, String?, String?) -> Unit,
     onUserClick: (ProfileResponse) -> Unit,
     recruiterMode: Boolean = false,
+    savedStudentIds: Set<Long> = emptySet(),
     onShortlistClick: ((ProfileResponse) -> Unit)? = null,
     onMessageClick: ((ProfileResponse) -> Unit)? = null
 ) {
@@ -364,32 +366,48 @@ fun StudentSearchScreen(
                                     )
 
                                     if (recruiterMode) {
-                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
                                         Row(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            IconButton(
-                                                onClick = { onShortlistClick?.invoke(student) },
-                                                modifier = Modifier.size(28.dp)
+                                            val isSaved = savedStudentIds.contains(student.userId)
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = if (isSaved) DevLinkBlue else Color.White,
+                                                border = BorderStroke(1.5.dp, DevLinkBlue),
+                                                modifier = Modifier
+                                                    .size(32.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clickable { onShortlistClick?.invoke(student) }
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Bookmark,
-                                                    contentDescription = "Shortlist",
-                                                    tint = DevLinkBlue,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        imageVector = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                                        contentDescription = if (isSaved) "Shortlisted" else "Shortlist candidate",
+                                                        tint = if (isSaved) Color.White else DevLinkBlue,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
                                             }
-                                            IconButton(
-                                                onClick = { onMessageClick?.invoke(student) },
-                                                modifier = Modifier.size(28.dp)
+
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = DevLinkBlueContainer,
+                                                border = BorderStroke(1.dp, Color(0xFFBFDBFE)),
+                                                modifier = Modifier
+                                                    .size(32.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clickable { onMessageClick?.invoke(student) }
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Chat,
-                                                    contentDescription = "Message",
-                                                    tint = DevLinkBlue,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Chat,
+                                                        contentDescription = "Message",
+                                                        tint = DevLinkBlue,
+                                                        modifier = Modifier.size(17.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                     }

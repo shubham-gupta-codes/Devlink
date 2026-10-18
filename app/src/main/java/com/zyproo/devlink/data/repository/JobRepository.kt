@@ -16,5 +16,8 @@ interface JobRepository {
     suspend fun evaluateApplication(applicationId: Long, status: JobApplicationStatus): ApiResult<JobApplicationResponse>
     suspend fun shortlistCandidate(studentId: Long, jobId: Long?): ApiResult<SavedCandidateResponse>
     suspend fun getSavedCandidates(): ApiResult<List<SavedCandidateResponse>>
+    suspend fun removeShortlistedCandidate(studentId: Long, jobId: Long?): ApiResult<Unit>
+    suspend fun removeShortlistedCandidateById(id: Long): ApiResult<Unit>
+    suspend fun removeCandidateFromAllShortlists(studentId: Long): ApiResult<Unit>
     suspend fun getRecommendedCandidates(jobId: Long): ApiResult<List<ProfileResponse>>
 }

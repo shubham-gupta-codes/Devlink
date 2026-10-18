@@ -53,6 +53,24 @@ class JobRepositoryImpl @Inject constructor(
     override suspend fun getSavedCandidates(): ApiResult<List<SavedCandidateResponse>> =
         safeCall { api.getSavedCandidates() }
 
+    override suspend fun removeShortlistedCandidate(studentId: Long, jobId: Long?): ApiResult<Unit> =
+        safeCall {
+            api.removeShortlistedCandidate(studentId, jobId)
+            Unit
+        }
+
+    override suspend fun removeShortlistedCandidateById(id: Long): ApiResult<Unit> =
+        safeCall {
+            api.removeShortlistedCandidateById(id)
+            Unit
+        }
+
+    override suspend fun removeCandidateFromAllShortlists(studentId: Long): ApiResult<Unit> =
+        safeCall {
+            api.removeCandidateFromAllShortlists(studentId)
+            Unit
+        }
+
     override suspend fun getRecommendedCandidates(jobId: Long): ApiResult<List<ProfileResponse>> =
         safeCall { api.getRecommendedCandidates(jobId) }
 

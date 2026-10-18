@@ -100,9 +100,15 @@ fun RecruiterFlow(
                         savedCandidates = jobState.savedCandidates,
                         recruiterJobs = jobState.recruiterJobs,
                         onUserClick = onUserClick,
-                        onMessageClick = onStartDirectChat
+                        onMessageClick = onStartDirectChat,
+                        onRemoveCandidate = { savedId ->
+                            jobViewModel.removeShortlistedCandidateById(savedId)
+                        }
                     )
                 } else {
+                    val savedStudentIds = remember(jobState.savedCandidates) {
+                        jobState.savedCandidates.map { it.studentProfile.userId }.toSet()
+                    }
                     StudentSearchScreen(
                         searchResults = searchResults,
                         isSearching = isSearching,
@@ -110,6 +116,7 @@ fun RecruiterFlow(
                         onSearch = onSearch,
                         onUserClick = onUserClick,
                         recruiterMode = true,
+                        savedStudentIds = savedStudentIds,
                         onShortlistClick = { studentForShortlistDialog = it },
                         onMessageClick = { onStartDirectChat(it.username) }
                     )
@@ -467,67 +474,261 @@ fun RecruiterFlow(
 
     // Shortlist dropdown Dialog
     studentForShortlistDialog?.let { student ->
+        val savedForThisStudent = remember(jobState.savedCandidates, student.userId) {
+            jobState.savedCandidates.filter { it.studentProfile.userId == student.userId }
+        }
+        val isSavedGeneral = savedForThisStudent.any { it.jobId == null }
+
         AlertDialog(
             onDismissRequest = { studentForShortlistDialog = null },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { studentForShortlistDialog = null }) {
-                    Text("Cancel", color = Color.Gray)
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp),
+            tonalElevation = 0.dp,
+            confirmButton = {
+                Button(
+                    onClick = { studentForShortlistDialog = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = DevLinkBlue),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Done", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
-            title = { Text("Shortlist Candidate", fontSize = 16.sp, fontWeight = FontWeight.Bold) },
+            dismissButton = {
+                TextButton(onClick = { studentForShortlistDialog = null }) {
+                    Text("Cancel", color = DevLinkTextSecondary)
+                }
+            },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(DevLinkBlueContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (!student.photoUrl.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = student.photoUrl.toFullMediaUrl(),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                Text(
+                                    text = student.name?.take(2)?.uppercase() ?: "ST",
+                                    color = DevLinkBlue,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = student.name ?: student.username,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = DevLinkTextPrimary
+                            )
+                            Text(
+                                text = "@${student.username}",
+                                fontSize = 12.sp,
+                                color = DevLinkTextSecondary
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = { studentForShortlistDialog = null },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = DevLinkTextSecondary)
+                    }
+                }
+            },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "Select a job role to assign ${student.name ?: student.username} to:",
+                        text = "Assign to General Interest or an open job role. Tap any active role to remove:",
                         fontSize = 13.sp,
                         color = DevLinkTextSecondary
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     // Option for General Interest / Unassigned
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
                             .clickable {
-                                jobViewModel.shortlistCandidate(student.userId, null)
-                                studentForShortlistDialog = null
-                            }
-                            .padding(vertical = 12.dp, horizontal = 8.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFF1F5FE)
+                                if (isSavedGeneral) {
+                                    jobViewModel.removeShortlistedCandidate(student.userId, null)
+                                } else {
+                                    jobViewModel.shortlistCandidate(student.userId, null)
+                                }
+                            },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSavedGeneral) Color(0xFFEFF6FF) else Color(0xFFF8FAFC),
+                        border = BorderStroke(if (isSavedGeneral) 1.5.dp else 1.dp, if (isSavedGeneral) DevLinkBlue else DevLinkBorder)
                     ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isSavedGeneral) Icons.Default.CheckCircle else Icons.Default.BookmarkBorder,
+                                    contentDescription = null,
+                                    tint = if (isSavedGeneral) DevLinkBlue else DevLinkTextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = "General Interest",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = if (isSavedGeneral) DevLinkBlue else DevLinkTextPrimary
+                                    )
+                                    Text(
+                                        text = if (isSavedGeneral) "Shortlisted • Tap to remove" else "General talent pool",
+                                        fontSize = 11.sp,
+                                        color = if (isSavedGeneral) DevLinkBlue else DevLinkTextSecondary
+                                    )
+                                }
+                            }
+                            if (isSavedGeneral) {
+                                Surface(
+                                    color = Color(0xFFFEE2E2),
+                                    shape = RoundedCornerShape(6.dp),
+                                    modifier = Modifier.clickable {
+                                        jobViewModel.removeShortlistedCandidate(student.userId, null)
+                                    }
+                                ) {
+                                    Text(
+                                        text = "Remove",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFDC2626),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (jobState.recruiterJobs.isNotEmpty()) {
                         Text(
-                            text = "General Interest (Unassigned)",
-                            color = DevLinkBlue,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(8.dp)
+                            text = "Or Assign to Open Job Postings:",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DevLinkTextSecondary,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
 
                     // Display open jobs
                     jobState.recruiterJobs.forEach { job ->
+                        val isSavedJob = savedForThisStudent.any { it.jobId == job.id }
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
                                 .clickable {
-                                    jobViewModel.shortlistCandidate(student.userId, job.id)
-                                    studentForShortlistDialog = null
-                                }
-                                .padding(vertical = 4.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFFF6F7FB)
+                                    if (isSavedJob) {
+                                        jobViewModel.removeShortlistedCandidate(student.userId, job.id)
+                                    } else {
+                                        jobViewModel.shortlistCandidate(student.userId, job.id)
+                                    }
+                                },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSavedJob) Color(0xFFEFF6FF) else Color(0xFFF8FAFC),
+                            border = BorderStroke(if (isSavedJob) 1.5.dp else 1.dp, if (isSavedJob) DevLinkBlue else DevLinkBorder)
                         ) {
-                            Text(
-                                text = job.title,
-                                color = DevLinkTextPrimary,
-                                fontSize = 14.sp,
-                                modifier = Modifier.padding(12.dp)
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSavedJob) Icons.Default.CheckCircle else Icons.Default.WorkOutline,
+                                        contentDescription = null,
+                                        tint = if (isSavedJob) DevLinkBlue else DevLinkTextSecondary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = job.title,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = if (isSavedJob) DevLinkBlue else DevLinkTextPrimary
+                                        )
+                                        Text(
+                                            text = if (isSavedJob) "Shortlisted • Tap to remove" else "Tap to shortlist for this role",
+                                            fontSize = 11.sp,
+                                            color = if (isSavedJob) DevLinkBlue else DevLinkTextSecondary
+                                        )
+                                    }
+                                }
+                                if (isSavedJob) {
+                                    Surface(
+                                        color = Color(0xFFFEE2E2),
+                                        shape = RoundedCornerShape(6.dp),
+                                        modifier = Modifier.clickable {
+                                            jobViewModel.removeShortlistedCandidate(student.userId, job.id)
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "Remove",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFDC2626),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Remove from all shortlists button if shortlisted anywhere
+                    if (savedForThisStudent.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(
+                            onClick = {
+                                jobViewModel.removeCandidateFromAllShortlists(student.userId)
+                                studentForShortlistDialog = null
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
+                            border = BorderStroke(1.dp, Color(0xFFFCA5A5))
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Remove from All Shortlists", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -1010,7 +1211,8 @@ fun SavedCandidatesGroupedScreen(
     savedCandidates: List<SavedCandidateResponse>,
     recruiterJobs: List<JobResponse>,
     onUserClick: (ProfileResponse) -> Unit,
-    onMessageClick: (String) -> Unit
+    onMessageClick: (String) -> Unit,
+    onRemoveCandidate: (Long) -> Unit = {}
 ) {
     if (savedCandidates.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -1031,7 +1233,12 @@ fun SavedCandidatesGroupedScreen(
                 Text(text = "General Interest", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = DevLinkTextPrimary)
             }
             items(generalSaved) { saved ->
-                SavedCandidateItem(student = saved.studentProfile, onUserClick = onUserClick, onMessageClick = onMessageClick)
+                SavedCandidateItem(
+                    student = saved.studentProfile,
+                    onUserClick = onUserClick,
+                    onMessageClick = onMessageClick,
+                    onRemoveClick = { onRemoveCandidate(saved.id) }
+                )
             }
         }
 
@@ -1043,7 +1250,12 @@ fun SavedCandidatesGroupedScreen(
                     Text(text = job.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = DevLinkTextPrimary)
                 }
                 items(jobSaved) { saved ->
-                    SavedCandidateItem(student = saved.studentProfile, onUserClick = onUserClick, onMessageClick = onMessageClick)
+                    SavedCandidateItem(
+                        student = saved.studentProfile,
+                        onUserClick = onUserClick,
+                        onMessageClick = onMessageClick,
+                        onRemoveClick = { onRemoveCandidate(saved.id) }
+                    )
                 }
             }
         }
@@ -1054,7 +1266,8 @@ fun SavedCandidatesGroupedScreen(
 fun SavedCandidateItem(
     student: ProfileResponse,
     onUserClick: (ProfileResponse) -> Unit,
-    onMessageClick: (String) -> Unit
+    onMessageClick: (String) -> Unit,
+    onRemoveClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
@@ -1090,6 +1303,16 @@ fun SavedCandidateItem(
             }
             IconButton(onClick = { onMessageClick(student.username) }) {
                 Icon(Icons.Default.Chat, contentDescription = "Message", tint = DevLinkBlue, modifier = Modifier.size(20.dp))
+            }
+            if (onRemoveClick != null) {
+                IconButton(onClick = onRemoveClick) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteOutline,
+                        contentDescription = "Remove candidate",
+                        tint = Color(0xFFEF4444),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
