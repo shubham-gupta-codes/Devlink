@@ -1,32 +1,42 @@
 package com.zyproo.devlink.common
 
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 /**
- * Parses any ISO 8601 or standard datetime string into a ZonedDateTime in the user's local zone.
+ * Parses any ISO 8601 or standard datetime string into a Date object.
+ * Fully compatible with all Android API levels (API 24+ without requiring API 26 java.time).
  */
-private fun parseToLocalZonedDateTime(dateStr: String?): ZonedDateTime? {
+private fun parseToDate(dateStr: String?): Date? {
     if (dateStr.isNullOrBlank()) return null
-    return try {
-        Instant.parse(dateStr).atZone(ZoneId.systemDefault())
-    } catch (_: Exception) {
+    val clean = dateStr.trim()
+
+    val patterns = arrayOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd"
+    )
+
+    for (pattern in patterns) {
         try {
-            LocalDateTime.parse(dateStr).atZone(ZoneId.systemDefault())
-        } catch (_: Exception) {
-            try {
-                LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault())
-            } catch (_: Exception) {
-                null
+            val sdf = SimpleDateFormat(pattern, Locale.US)
+            if (pattern.endsWith("'Z'") || (!pattern.contains("X") && pattern.contains("T"))) {
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
             }
+            val date = sdf.parse(clean)
+            if (date != null) return date
+        } catch (_: Exception) {
+            // Try next format
         }
     }
+    return null
 }
 
 /**
@@ -35,11 +45,10 @@ private fun parseToLocalZonedDateTime(dateStr: String?): ZonedDateTime? {
 fun formatRelativeTime(createdAt: String?): String {
     if (createdAt.isNullOrBlank()) return ""
     return try {
-        val zdt = parseToLocalZonedDateTime(createdAt) ?: return createdAt
-        val instant = zdt.toInstant()
-        val now = Instant.now()
-        val duration = Duration.between(instant, now)
-        val seconds = duration.seconds
+        val date = parseToDate(createdAt) ?: return createdAt
+        val now = System.currentTimeMillis()
+        val diffMs = now - date.time
+        val seconds = diffMs / 1000
 
         when {
             seconds < 0 -> "Upcoming"
@@ -62,9 +71,11 @@ fun formatRelativeTime(createdAt: String?): String {
 fun formatMeetingDateTime(dateStr: String?): String {
     if (dateStr.isNullOrBlank()) return "Not scheduled"
     return try {
-        val zdt = parseToLocalZonedDateTime(dateStr) ?: return dateStr
-        val formatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy 'at' hh:mm a", Locale.ENGLISH)
-        zdt.format(formatter)
+        val date = parseToDate(dateStr) ?: return dateStr
+        val formatter = SimpleDateFormat("EEE, d MMM yyyy 'at' hh:mm a", Locale.ENGLISH).apply {
+            timeZone = TimeZone.getDefault()
+        }
+        formatter.format(date)
     } catch (_: Exception) {
         dateStr
     }
@@ -77,9 +88,11 @@ fun formatMeetingDateTime(dateStr: String?): String {
 fun formatDisplayDate(dateStr: String?): String {
     if (dateStr.isNullOrBlank()) return ""
     return try {
-        val zdt = parseToLocalZonedDateTime(dateStr) ?: return dateStr.take(10)
-        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
-        zdt.format(formatter)
+        val date = parseToDate(dateStr) ?: return dateStr.take(10)
+        val formatter = SimpleDateFormat("d MMM yyyy", Locale.ENGLISH).apply {
+            timeZone = TimeZone.getDefault()
+        }
+        formatter.format(date)
     } catch (_: Exception) {
         dateStr.take(10)
     }
@@ -92,9 +105,11 @@ fun formatDisplayDate(dateStr: String?): String {
 fun formatDisplayDateTime(dateStr: String?): String {
     if (dateStr.isNullOrBlank()) return ""
     return try {
-        val zdt = parseToLocalZonedDateTime(dateStr) ?: return dateStr.take(16).replace("T", " ")
-        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy, hh:mm a", Locale.ENGLISH)
-        zdt.format(formatter)
+        val date = parseToDate(dateStr) ?: return dateStr.take(16).replace("T", " ")
+        val formatter = SimpleDateFormat("d MMM yyyy, hh:mm a", Locale.ENGLISH).apply {
+            timeZone = TimeZone.getDefault()
+        }
+        formatter.format(date)
     } catch (_: Exception) {
         dateStr.take(16).replace("T", " ")
     }
