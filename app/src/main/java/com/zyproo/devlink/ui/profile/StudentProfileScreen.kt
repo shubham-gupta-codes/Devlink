@@ -540,112 +540,115 @@ fun StudentProfileScreen(
             }
 
             // Teacher Reviews Section (Placed below Verified Skills)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, DevLinkBorder),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+            // Only visible to Teachers and Recruiters
+            if (viewerRole == com.zyproo.devlink.common.Role.TEACHER || viewerRole == com.zyproo.devlink.common.Role.RECRUITER) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    border = BorderStroke(1.dp, DevLinkBorder),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.RateReview,
-                                contentDescription = null,
-                                tint = DevLinkBlue,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "Teacher Reviews & Endorsements",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = DevLinkTextPrimary
-                            )
-                        }
-                        if (viewerRole == com.zyproo.devlink.common.Role.TEACHER && onAddFeedback != null) {
-                            TextButton(
-                                onClick = { showAddFeedbackDialog = true },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Review",
+                                    imageVector = Icons.Default.RateReview,
+                                    contentDescription = null,
                                     tint = DevLinkBlue,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = if (teacherFeedbacks.isNotEmpty()) "Edit" else "Add Review",
-                                    fontSize = 12.sp,
+                                    text = "Teacher Reviews & Endorsements",
                                     fontWeight = FontWeight.Bold,
-                                    color = DevLinkBlue
+                                    fontSize = 15.sp,
+                                    color = DevLinkTextPrimary
                                 )
                             }
-                        }
-                    }
-
-                    if (teacherFeedbacks.isEmpty()) {
-                        Text(
-                            text = "No teacher reviews submitted for this student yet.",
-                            fontSize = 13.sp,
-                            color = DevLinkTextSecondary
-                        )
-                    } else {
-                        teacherFeedbacks.forEach { feedback ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                                border = BorderStroke(1.dp, DevLinkBorder)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                            if (viewerRole == com.zyproo.devlink.common.Role.TEACHER && onAddFeedback != null) {
+                                TextButton(
+                                    onClick = { showAddFeedbackDialog = true },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = feedback.teacherName,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            color = DevLinkTextPrimary
-                                        )
-                                        Text(
-                                            text = formatDisplayDate(feedback.createdAt),
-                                            fontSize = 11.sp,
-                                            color = DevLinkTextSecondary
-                                        )
-                                    }
-                                    if (!feedback.department.isNullOrBlank()) {
-                                        Text(
-                                            text = feedback.department ?: "",
-                                            fontSize = 11.sp,
-                                            color = DevLinkBlue,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                    Text(
-                                        text = feedback.content,
-                                        fontSize = 13.sp,
-                                        color = DevLinkTextPrimary,
-                                        lineHeight = 18.sp
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Review",
+                                        tint = DevLinkBlue,
+                                        modifier = Modifier.size(16.dp)
                                     )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (teacherFeedbacks.isNotEmpty()) "Edit" else "Add Review",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DevLinkBlue
+                                    )
+                                }
+                            }
+                        }
+
+                        if (teacherFeedbacks.isEmpty()) {
+                            Text(
+                                text = "No teacher reviews submitted for this student yet.",
+                                fontSize = 13.sp,
+                                color = DevLinkTextSecondary
+                            )
+                        } else {
+                            teacherFeedbacks.forEach { feedback ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                                    border = BorderStroke(1.dp, DevLinkBorder)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = feedback.teacherName,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp,
+                                                color = DevLinkTextPrimary
+                                            )
+                                            Text(
+                                                text = formatDisplayDate(feedback.createdAt),
+                                                fontSize = 11.sp,
+                                                color = DevLinkTextSecondary
+                                            )
+                                        }
+                                        if (!feedback.department.isNullOrBlank()) {
+                                            Text(
+                                                text = feedback.department ?: "",
+                                                fontSize = 11.sp,
+                                                color = DevLinkBlue,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                        Text(
+                                            text = feedback.content,
+                                            fontSize = 13.sp,
+                                            color = DevLinkTextPrimary,
+                                            lineHeight = 18.sp
+                                        )
+                                    }
                                 }
                             }
                         }
